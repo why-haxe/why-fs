@@ -1,0 +1,20 @@
+{
+  "name": "why-fs",
+  "classPath": "src",
+  "dependencies": {
+    "tink_http": "gh:haxetink/tink_http#pure",
+    "tink_io": "gh:haxetink/tink_io#pure",
+    "asys": "gh:kevinresol/asys#pure",
+    "extern-js": "gh:ExternKit/extern-js",
+    "extern-js-aws-sdk": "gh:ExternKit/extern-js-aws-sdk"
+  },
+  "contributors": [
+    "kevinresol"
+  ],
+  "tags": [
+    "fs"
+  ],
+  "version": "0.0.0",
+  "license": "MIT",
+  "releasenote": "initial release"
+}
