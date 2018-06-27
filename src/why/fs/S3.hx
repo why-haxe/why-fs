@@ -48,11 +48,16 @@ class S3 implements Fs {
   public function read(path:String):RealSource
     return new Error('not implemented');
   
-  public function write(path:String):RealSink {
+  public function write(path:String, ?options:WriteOptions):RealSink {
     var pass = new js.node.stream.PassThrough();
     var buf = new Buffer(0);
     pass.on('data', function(d) buf = Buffer.concat([buf, d]));
-    pass.on('end', function() @:futurize s3.putObject({Bucket: bucket, Key: sanitize(path), Body: buf}, $cb1).eager());
+    pass.on('end', function() @:futurize s3.putObject({
+      Bucket: bucket, 
+      Key: sanitize(path), 
+      Body: buf,
+      ACL: (options != null && options.isPublic) ? 'public-read' : 'private',
+    }, $cb1).eager());
     var sink = Sink.ofNodeStream('Sink: $path', pass);
     return sink;
   }
@@ -70,13 +75,24 @@ class S3 implements Fs {
       });
   }
   
-  public function getDownloadUrl(path:String):Promise<UrlRequest>
-    return @:futurize s3.getSignedUrl('getObject', {Bucket: bucket, Key: sanitize(path), Expires: 300}, $cb1)
-		.next(function(url) return {url: url, method: GET});
+  public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<UrlRequest> {
+    return if(options != null && options.isPublic)
+      {url: 'https://$bucket.s3.amazonaws.com/' + sanitize(path), method: GET}
+    else @:futurize s3.getSignedUrl('getObject', {Bucket: bucket, Key: sanitize(path), Expires: 300}, $cb1)
+      .next(function(url) return {url: url, method: GET});
+  }
   
-  public function getUploadUrl(path:String, mime:String):Promise<UrlRequest>
-    return @:futurize s3.getSignedUrl('putObject', {Bucket: bucket, Key: sanitize(path), Expires: 300, ContentType: mime}, $cb1)
-		.next(function(url) return {url: url, method: PUT});
+  public function getUploadUrl(path:String, ?options:UploadOptions):Promise<UrlRequest> {
+    if(options == null || options.mime == null) return new Error('Requires mime type');
+    return @:futurize s3.getSignedUrl('putObject', {
+      Bucket: bucket, 
+      Key: sanitize(path), 
+      Expires: 300,
+      ACL: (options != null && options.isPublic) ? 'public-read' : 'private',
+      ContentType: options.mime,
+    }, $cb1)
+      .next(function(url) return {url: url, method: PUT});
+  }
   
   static function sanitize(path:String) {
     if(path.startsWith('/')) path = path.substr(1);

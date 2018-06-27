@@ -13,7 +13,7 @@ class Local implements Fs {
   
   var root:String;
   var _getDownloadUrl:String->Promise<UrlRequest>;
-  var _getUploadUrl:String->String->Promise<UrlRequest>;
+  var _getUploadUrl:String->UploadOptions->Promise<UrlRequest>;
   
   public function new(options:LocalOptions) {
     root = options.root.removeTrailingSlashes();
@@ -65,7 +65,7 @@ class Local implements Fs {
   public function read(path:String):RealSource
     return getFullPath(path).readStream();
   
-  public function write(path:String):RealSink {
+  public function write(path:String, ?options:WriteOptions):RealSink {
     path = getFullPath(path);
     return ensureDirectory(path.directory())
       .next(function(_) return path.writeStream());
@@ -123,11 +123,11 @@ class Local implements Fs {
       });
   }
   
-  public function getDownloadUrl(path:String):Promise<UrlRequest>
+  public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<UrlRequest>
     return _getDownloadUrl(path);
     
-  public function getUploadUrl(path:String, mime:String):Promise<UrlRequest>
-    return _getUploadUrl(path, mime);
+  public function getUploadUrl(path:String, ?options:UploadOptions):Promise<UrlRequest>
+    return _getUploadUrl(path, options);
   
   inline function getFullPath(path:String)
     return '$root/$path'.normalize();
@@ -139,5 +139,5 @@ class Local implements Fs {
 typedef LocalOptions = {
   root:String,
   getDownloadUrl:String->Promise<UrlRequest>,
-  getUploadUrl:String->String->Promise<UrlRequest>,
+  getUploadUrl:String->UploadOptions->Promise<UrlRequest>,
 }

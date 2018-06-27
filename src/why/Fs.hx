@@ -41,7 +41,7 @@ interface Fs {
 	 *  @param path - 
 	 *  @return RealSink
 	 */
-	function write(path:String):RealSink;
+	function write(path:String, ?options:WriteOptions):RealSink;
 	
 	/**
 	 *  Delete (recursively) all files with the path prefix
@@ -62,14 +62,14 @@ interface Fs {
 	 *  @param path - 
 	 *  @return Promise<String>
 	 */
-	function getDownloadUrl(path:String):Promise<UrlRequest>;
+	function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<UrlRequest>;
 	
 	/**
 	 *  Create a URL that can be used to upload the file
 	 *  @param path - 
 	 *  @return Promise<String>
 	 */
-	function getUploadUrl(path:String, mime:String):Promise<UrlRequest>;
+	function getUploadUrl(path:String, ?options:UploadOptions):Promise<UrlRequest>;
 }
 
 typedef Stat = {
@@ -80,4 +80,17 @@ typedef Stat = {
 typedef UrlRequest = {
 	method:Method,
 	url:String,
+}
+
+typedef WriteOptions = {
+	?isPublic:Bool,
+}
+
+typedef DownloadOptions = {
+	?isPublic:Bool,
+}
+
+typedef UploadOptions = {
+	?mime:String,
+	?isPublic:Bool,
 }
