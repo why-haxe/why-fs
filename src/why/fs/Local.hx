@@ -117,7 +117,7 @@ class Local implements Fs {
   
   public function stat(path:String):Promise<Stat> {
     return getFullPath(path).stat().asPromise()
-      .next(function(stat) return {
+      .next(function(stat):Stat return {
         size: stat.size,
         mime: mime.Mime.lookup(path),
       });

@@ -72,6 +72,7 @@ class S3 implements Fs {
       .next(function(o) return {
         size: o.ContentLength,
         mime: o.ContentType,
+        metadata: o.Metadata,
       });
   }
   
@@ -90,6 +91,11 @@ class S3 implements Fs {
       Expires: 300,
       ACL: (options != null && options.isPublic) ? 'public-read' : 'private',
       ContentType: options.mime,
+      Metadata: 
+        switch options {
+          case null | {metadata: null}: {}
+          case {metadata: obj}: obj;
+        }
     }, $cb1)
       .next(function(url) return {url: url, method: PUT});
   }

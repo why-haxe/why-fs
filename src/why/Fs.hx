@@ -1,5 +1,6 @@
 package why;
 
+import haxe.DynamicAccess;
 import tink.http.Method;
 
 using tink.CoreApi;
@@ -75,6 +76,7 @@ interface Fs {
 typedef Stat = {
   size:Int,
   mime:String,
+  ?metadata:DynamicAccess<String>,
 }
 
 typedef UrlRequest = {
@@ -93,4 +95,5 @@ typedef DownloadOptions = {
 typedef UploadOptions = {
 	?mime:String,
 	?isPublic:Bool,
+	?metadata:DynamicAccess<String>,
 }
