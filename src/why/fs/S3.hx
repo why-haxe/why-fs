@@ -69,7 +69,7 @@ class S3 implements Fs {
   
   public function stat(path:String):Promise<Stat> {
     return @:futurize s3.headObject({Bucket: bucket, Key: sanitize(path)}, $cb1)
-      .next(function(o) return {
+      .next(function(o):Stat return {
         size: o.ContentLength,
         mime: o.ContentType,
         metadata: o.Metadata,
