@@ -37,7 +37,7 @@ class Local implements Fs {
                   case Success(items):
                     for(item in items) {
                       var path = f.addTrailingSlash() + item;
-                      item.isDirectory()
+                      path.isDirectory()
                         .handle(function(isDir) if(isDir) read(path.addTrailingSlash()) else ret.push(path));
                     }
                     if(--working == 0)
