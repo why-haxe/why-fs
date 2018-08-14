@@ -79,7 +79,7 @@ class S3 implements Fs {
   public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<UrlRequest> {
     return if(options != null && options.isPublic)
       {url: 'https://$bucket.s3.amazonaws.com/' + sanitize(path), method: GET}
-    else @:futurize s3.getSignedUrl('getObject', {Bucket: bucket, Key: sanitize(path), Expires: 300}, $cb1)
+    else @:futurize s3.getSignedUrl('getObject', {Bucket: bucket, Key: sanitize(path)}, $cb1)
       .next(function(url) return {url: url, method: GET});
   }
   
@@ -88,7 +88,6 @@ class S3 implements Fs {
     return @:futurize s3.getSignedUrl('putObject', {
       Bucket: bucket, 
       Key: sanitize(path), 
-      Expires: 300,
       ACL: (options != null && options.isPublic) ? 'public-read' : 'private',
       ContentType: options.mime,
       Metadata: 
