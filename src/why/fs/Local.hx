@@ -22,35 +22,35 @@ class Local implements Fs {
   }
     
   public function list(path:String):Promise<Array<String>> {
-    return Future.async(function(cb) {
-      var fullpath = getFullPath(path).addTrailingSlash();
-      fullpath.exists().handle(function(exists) {
-        if(!exists) cb(Success([]));
-        else {
-          var ret = [];
-          var working = 0;
-          function read(f:String) {
-            working ++;
-            return 
-              f.readDirectory()
-                .handle(function(o) switch o {
-                  case Success(items):
-                    for(item in items) {
-                      var path = f.addTrailingSlash() + item;
-                      path.isDirectory()
-                        .handle(function(isDir) if(isDir) read(path.addTrailingSlash()) else ret.push(path));
-                    }
-                    if(--working == 0)
-                      cb(Success([for(item in ret) item.substr(fullpath.length)]));
-                      
-                  case Failure(e):
-                    cb(Failure(e));
-                });
+    var fullpath = getFullPath(path).addTrailingSlash();
+    return 
+      fullpath.exists().next(function(exists) {
+        var ret:Array<String> = [];
+        return 
+          if(!exists) {
+            ret;
+          } else {
+            function read(f:String):Promise<Noise> {
+              return 
+                f.readDirectory()
+                  .next(function(files) {
+                      return Promise.inParallel([for(item in files) {
+                        var path = Path.join([f, item]);
+                        path.isDirectory().next(function(isDir) {
+                          return
+                            if(isDir)
+                              read(path.addTrailingSlash());
+                            else {
+                              ret.push(path.substr(fullpath.length));
+                              Noise;
+                            }
+                        });
+                      }]);
+                  });
+            }
+            read(fullpath).swap(ret);
           }
-          read(fullpath);
-        }
       });
-    });
   }
     
   public function exists(path:String):Promise<Bool>
