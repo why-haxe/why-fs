@@ -47,8 +47,10 @@ class S3 implements Fs {
         .next(function(_) return @:futurize s3.deleteObject({Bucket: bucket, Key: from}, $cb1));
   }
   
-  public function read(path:String):RealSource
-    return new Error('not implemented');
+  public function read(path:String):RealSource {
+    return @:futurize s3.getObject({Bucket: bucket, Key: sanitize(path)}, $cb1)
+      .next(function(o):RealSource return (o.Body:Buffer).hxToBytes());
+  }
   
   public function write(path:String, ?options:WriteOptions):RealSink {
     var pass = new js.node.stream.PassThrough();
