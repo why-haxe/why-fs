@@ -4,9 +4,6 @@
   "dependencies": {
     "tink_http": "gh:haxetink/tink_http",
     "tink_io": "gh:haxetink/tink_io",
-    "asys": "gh:kevinresol/asys",
-    "extern-js": "gh:ExternKit/extern-js",
-    "extern-js-aws-sdk": "gh:ExternKit/extern-js-aws-sdk",
     "futurize": ""
   },
   "contributors": [

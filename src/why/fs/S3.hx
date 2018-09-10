@@ -15,6 +15,7 @@ using StringTools;
 using haxe.io.Path;
 
 @:build(futurize.Futurize.build())
+@:require('extern-js-aws-sdk')
 class S3 implements Fs {
   
   var bucket:String;

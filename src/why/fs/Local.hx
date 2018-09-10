@@ -9,6 +9,7 @@ using tink.io.Sink;
 using tink.io.Source;
 using haxe.io.Path;
 
+@:require('asys')
 class Local implements Fs {
   
   var root:String;
