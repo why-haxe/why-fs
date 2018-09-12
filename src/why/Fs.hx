@@ -90,6 +90,7 @@ typedef WriteOptions = {
 
 typedef DownloadOptions = {
 	?isPublic:Bool,
+	?saveAsFilename:String,
 }
 
 typedef UploadOptions = {

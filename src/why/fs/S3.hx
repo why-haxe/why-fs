@@ -82,9 +82,16 @@ class S3 implements Fs {
   }
   
   public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<UrlRequest> {
-    return if(options != null && options.isPublic)
+    return if(options != null && options.isPublic && options.saveAsFilename == null)
       {url: 'https://$bucket.s3.amazonaws.com/' + sanitize(path), method: GET}
-    else @:futurize s3.getSignedUrl('getObject', {Bucket: bucket, Key: sanitize(path)}, $cb1)
+    else @:futurize s3.getSignedUrl('getObject', {
+      Bucket: bucket, 
+      Key: sanitize(path),
+      ResponseContentDisposition: switch options {
+        case null | {saveAsFilename: null}: null;
+        case {saveAsFilename: filename}: 'attachment; filename="$filename"';
+      },
+    }, $cb1)
       .next(function(url) return {url: url, method: GET});
   }
   
@@ -108,5 +115,4 @@ class S3 implements Fs {
     if(path.startsWith('/')) path = path.substr(1);
     return path;
   }
-  
 }
