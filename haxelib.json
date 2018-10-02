@@ -4,7 +4,8 @@
   "dependencies": {
     "tink_http": "gh:haxetink/tink_http",
     "tink_io": "gh:haxetink/tink_io",
-    "futurize": ""
+    "futurize": "",
+    "mime": ""
   },
   "contributors": [
     "kevinresol"
