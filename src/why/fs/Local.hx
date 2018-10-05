@@ -13,7 +13,7 @@ using haxe.io.Path;
 class Local implements Fs {
   
   var root:String;
-  var _getDownloadUrl:String->Promise<UrlRequest>;
+  var _getDownloadUrl:String->DownloadOptions->Promise<UrlRequest>;
   var _getUploadUrl:String->UploadOptions->Promise<UrlRequest>;
   
   public function new(options:LocalOptions) {
@@ -125,7 +125,7 @@ class Local implements Fs {
   }
   
   public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<UrlRequest>
-    return _getDownloadUrl(path);
+    return _getDownloadUrl(path, options);
     
   public function getUploadUrl(path:String, ?options:UploadOptions):Promise<UrlRequest>
     return _getUploadUrl(path, options);
@@ -139,6 +139,6 @@ class Local implements Fs {
 
 typedef LocalOptions = {
   root:String,
-  getDownloadUrl:String->Promise<UrlRequest>,
+  getDownloadUrl:String->DownloadOptions->Promise<UrlRequest>,
   getUploadUrl:String->UploadOptions->Promise<UrlRequest>,
 }
