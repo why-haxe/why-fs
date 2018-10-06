@@ -6,6 +6,13 @@ import tink.http.Header;
 using tink.io.Source;
 using tink.CoreApi;
 
+/**
+ * DO NOT USE THIS IN PRODUCTION
+ * 
+ * A handy file API. For quick testing only.
+ * There is no security in place. 
+ * Client and read/write any location of your filesystem.
+ */
 class FilesApi {
   var fs:Fs;
   
