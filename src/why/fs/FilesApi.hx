@@ -23,7 +23,7 @@ class FilesApi {
   @:params(path in query)
   public function upload(path:String, body:RealSource):Promise<Noise> {
     return body.pipeTo(fs.write(path))
-      .next(o -> switch o {
+      .next(function(o) return switch o {
         case AllWritten: Promise.lift({});
         case SourceFailed(e) | SinkFailed(e, _): e;
         case SinkEnded(_): new Error('Sink ended unexpectedly');
@@ -37,7 +37,7 @@ class FilesApi {
     if(saveAs != null) headers.push(new HeaderField(CONTENT_DISPOSITION, 'attachment; filename="$saveAs"'));
     return new OutgoingResponse(
       new ResponseHeader(200, 'OK', headers),
-      fs.read(path).idealize(e -> Source.EMPTY)
+      fs.read(path).idealize(function(_) return Source.EMPTY)
     );
   }
 }
