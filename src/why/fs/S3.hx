@@ -68,7 +68,7 @@ class S3 implements Fs {
   }
   
   public function delete(path:String):Promise<Noise> {
-    // TODO: delete folder
+    // TODO: delete recursively if `path` is a folder
     return @:futurize s3.deleteObject({Bucket: bucket, Key: sanitize(path)}, $cb1);
   }
   
