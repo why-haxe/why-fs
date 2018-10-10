@@ -24,7 +24,7 @@ class FilesApi {
   public function upload(path:String, body:RealSource):Promise<Noise> {
     return body.pipeTo(fs.write(path))
       .next(function(o) return switch o {
-        case AllWritten: Promise.lift({});
+        case AllWritten: Noise;
         case SourceFailed(e) | SinkFailed(e, _): e;
         case SinkEnded(_): new Error('Sink ended unexpectedly');
       });
