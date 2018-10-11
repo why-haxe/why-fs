@@ -22,20 +22,13 @@ class RunTests {
   var fs:Fs;
   function new(fs) this.fs = fs;
   
-  public function listRecursive() {
-    fs.list('src/why')
+  @:variant('Recursive'(true, false))
+  @:variant('Non-Recursive'(false, true))
+  @:variant('Default'(null, false))
+  public function list(recursive:Null<Bool>, result) {
+    fs.list('src/why', recursive)
       .next(function(entries) {
-        asserts.assert(!entries.exists(function(entry) return entry == 'fs'));
-        return Noise;
-      })
-      .handle(asserts.handle);
-    return asserts;
-  }
-  
-  public function listNonRecursive() {
-    fs.list('src/why', false)
-      .next(function(entries) {
-        asserts.assert(entries.exists(function(entry) return entry == 'fs'));
+        asserts.assert(entries.exists(function(entry) return entry == 'fs') == result);
         return Noise;
       })
       .handle(asserts.handle);
