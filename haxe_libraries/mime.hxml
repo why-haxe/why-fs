@@ -1,0 +1,4 @@
+-D mime=0.0.1
+# @install: lix --silent download "gh://github.com/kevinresol/mime#1f4c9b74445fc31651ad3954f3954cf0bb221639" into mime/0.0.1/github/1f4c9b74445fc31651ad3954f3954cf0bb221639
+-cp ${HAXE_LIBCACHE}/mime/0.0.1/github/1f4c9b74445fc31651ad3954f3954cf0bb221639/
+--macro mime.Mime.init()

@@ -26,10 +26,20 @@ class S3 implements Fs {
     s3 = new NativeS3();
   }
   
-  public function list(path:String):Promise<Array<String>> {
+  public function list(path:String, ?resursive:Bool = true):Promise<Array<Entry>> {
     var prefix = sanitize(path).addTrailingSlash();
-    return @:futurize s3.listObjects({Bucket: bucket, Prefix: prefix}, $cb1)
-      .next(function(o):Array<String> return [for(obj in o.Contents) obj.Key.substr(prefix.length)]);
+    if(resursive) {
+      return @:futurize s3.listObjectsV2({Bucket: bucket, Prefix: prefix}, $cb1)
+        .next(function(o):Array<Entry> return [for(obj in o.Contents) new Entry(obj.Key.substr(prefix.length), File)]);
+    } else {
+      return @:futurize s3.listObjectsV2({Bucket: bucket, Prefix: prefix, Delimiter: '/'}, $cb1)
+        .next(function(o):Array<Entry> {
+          var ret = [];
+          for(obj in o.Contents) new Entry(obj.Key.substr(prefix.length), File);
+          for(folder in o.CommonPrefixes) new Entry(folder.Prefix.substr(prefix.length), Directory);
+          return ret;
+        });
+    }
   }
   
   public function exists(path:String):Promise<Bool>

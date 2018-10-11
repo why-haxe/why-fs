@@ -1,26 +1,29 @@
 sudo: required
 dist: trusty
 
-language: haxe
+stages:
+  - test
+  - deploy
+
+language: node_js
+node_js: 8
+
+cache:
+  directories:
+    - $HOME/haxe
 
 os:
   - linux
-  - osx
+  # - osx
 
-# you can specify futher versions as found at http://haxe.org/website-content/downloads/versions.json
-haxe:
-  - "3.4.0"
-  - development
+env:
+  - HAXE_VERSION=3.4.7
+  - HAXE_VERSION=latest
   
-matrix:
-  allow_failures:
-    - haxe: development
-
 install:
-  - haxelib install travix
-  # to always use the latest version of travix comment out the previous line and uncomment the next
-  # - haxelib git travix https://github.com/back2dos/travix && pushd . && cd $(haxelib config)travix/git && haxe build-neko.hxml && popd
-  - haxelib run travix install
-
+  - npm i -g lix
+  - lix install haxe $HAXE_VERSION
+  - lix download
+  
 script:
-  - haxelib run travix node
+  - lix run travix node

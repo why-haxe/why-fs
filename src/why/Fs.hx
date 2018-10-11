@@ -13,7 +13,7 @@ interface Fs {
 	 *  @param path - 
 	 *  @return Promise<Array<String>>
 	 */
-	function list(path:String):Promise<Array<String>>;
+	function list(path:String, ?resursive:Bool):Promise<Array<Entry>>;
 	
 	/**
 	 *  Check if a file exists
@@ -97,4 +97,19 @@ typedef UploadOptions = {
 	?mime:String,
 	?isPublic:Bool,
 	?metadata:DynamicAccess<String>,
+}
+
+enum EntryType {
+  File;
+  Directory;
+}
+
+@:forward
+abstract Entry({path:String, type:EntryType}) to {path:String, type:EntryType} {
+  public inline function new(path, type) 
+    this = {path: path, type: type}
+  
+  @:to
+  public inline function toString():String
+    return this.path;
 }

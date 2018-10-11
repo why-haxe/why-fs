@@ -22,11 +22,11 @@ class Local implements Fs {
     _getUploadUrl = options.getUploadUrl;
   }
     
-  public function list(path:String):Promise<Array<String>> {
+  public function list(path:String, ?recursive:Bool = true):Promise<Array<Entry>> {
     var fullpath = getFullPath(path).addTrailingSlash();
     return 
       fullpath.exists().next(function(exists) {
-        var ret:Array<String> = [];
+        var ret:Array<Entry> = [];
         return 
           if(!exists) {
             ret;
@@ -39,10 +39,15 @@ class Local implements Fs {
                         var path = Path.join([f, item]);
                         path.isDirectory().next(function(isDir) {
                           return
-                            if(isDir)
-                              read(path.addTrailingSlash());
-                            else {
-                              ret.push(path.substr(fullpath.length));
+                            if(isDir) {
+                              if(recursive) {
+                                read(path.addTrailingSlash());
+                              } else {
+                                ret.push(new Entry(path.substr(fullpath.length), Directory));
+                                Noise;
+                              }
+                            } else {
+                              ret.push(new Entry(path.substr(fullpath.length), File));
                               Noise;
                             }
                         });
