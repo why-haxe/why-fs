@@ -22,7 +22,7 @@ env:
   
 install:
   - git clone https://github.com/localstack/localstack
-  - docker-compose up -d
+  - pushd localstack && docker-compose up -d && popd
   - npm i -g lix
   - lix install haxe $HAXE_VERSION
   - lix download
