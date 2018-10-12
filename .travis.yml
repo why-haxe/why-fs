@@ -21,6 +21,8 @@ env:
   - HAXE_VERSION=latest
   
 install:
+  - git clone https://github.com/localstack/localstack
+  - docker-compose up -d
   - npm i -g lix
   - lix install haxe $HAXE_VERSION
   - lix download

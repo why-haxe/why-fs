@@ -21,7 +21,7 @@ class RunTests {
   static function main() {
     Runner.run(TestBatch.make([
       new RunTests(new Local({root: Sys.getCwd() + '/test-folder', getDownloadUrl: null, getUploadUrl: null})),
-      // new RunTests(new S3('test-bucket', {endpoint: 'http://localhost:4572/test-bucket', s3BucketEndpoint: true})),
+      new RunTests(new S3('test-bucket', {endpoint: 'http://localhost:4572/test-bucket', s3BucketEndpoint: true})),
     ])).handle(Runner.exit);
   }
   
