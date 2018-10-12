@@ -8,6 +8,7 @@ using tink.CoreApi;
 using tink.io.Sink;
 using tink.io.Source;
 using haxe.io.Path;
+using StringTools;
 
 @:require('asys')
 class Local implements Fs {
@@ -17,13 +18,14 @@ class Local implements Fs {
   var _getUploadUrl:String->UploadOptions->Promise<UrlRequest>;
   
   public function new(options:LocalOptions) {
-    root = options.root.removeTrailingSlashes();
+    root = options.root;
     _getDownloadUrl = options.getDownloadUrl;
     _getUploadUrl = options.getUploadUrl;
   }
     
   public function list(path:String, ?recursive:Bool = true):Promise<Array<Entry>> {
-    var fullpath = getFullPath(path).addTrailingSlash();
+    var fullpath = getFullPath(path);
+    inline function trim(v:String) return v.charCodeAt(0) == '/'.code ? v.substr(1) : v;
     return 
       fullpath.exists().next(function(exists) {
         var ret:Array<Entry> = [];
@@ -41,13 +43,13 @@ class Local implements Fs {
                           return
                             if(isDir) {
                               if(recursive) {
-                                read(path.addTrailingSlash());
+                                read(path);
                               } else {
-                                ret.push(new Entry(path.substr(fullpath.length), Directory));
+                                ret.push(new Entry(trim(path.substr(fullpath.length)), Directory));
                                 Noise;
                               }
                             } else {
-                              ret.push(new Entry(path.substr(fullpath.length), File));
+                              ret.push(new Entry(trim(path.substr(fullpath.length)), File));
                               Noise;
                             }
                         });
@@ -79,7 +81,7 @@ class Local implements Fs {
   
   public function delete(path:String):Promise<Noise> {
     return Future.async(function(cb) {
-      var fullpath = getFullPath(path).addTrailingSlash();
+      var fullpath = getFullPath(path);
       var ret = [];
       var working = 0;
       
@@ -102,7 +104,7 @@ class Local implements Fs {
           f.readDirectory()
             .handle(function(o) switch o {
               case Success(items):
-                for(item in items) rm(f.addTrailingSlash() + item);
+                for(item in items) rm(Path.join([f, item]));
                 done();
               case Failure(e):
                 cb(Failure(e));
@@ -113,7 +115,7 @@ class Local implements Fs {
         working++;
         f.isDirectory().handle(function(isDir) {
           working--;
-          if(isDir) rmdir(f.addTrailingSlash()) else rmfile(f);
+          if(isDir) rmdir(f) else rmfile(f);
         });
       }
       
@@ -135,8 +137,11 @@ class Local implements Fs {
   public function getUploadUrl(path:String, ?options:UploadOptions):Promise<UrlRequest>
     return _getUploadUrl(path, options);
   
-  inline function getFullPath(path:String)
-    return '$root/$path'.normalize();
+  inline function getFullPath(path:String) {
+    var full = Path.join([root, path]);
+    while(full.startsWith('.//')) full = '.' + full.substr(2); // https://github.com/HaxeFoundation/haxe/issues/7548
+    return full.normalize();
+  }
     
   function ensureDirectory(dir:String):Promise<Noise>
     return dir.exists().next(function(e) return e ? Noise : dir.createDirectory());

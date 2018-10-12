@@ -21,9 +21,9 @@ class S3 implements Fs {
   var bucket:String;
   var s3:NativeS3;
   
-  public function new(bucket) {
+  public function new(bucket, ?opt) {
     this.bucket = bucket;
-    s3 = new NativeS3();
+    s3 = new NativeS3(opt);
   }
   
   public function list(path:String, ?resursive:Bool = true):Promise<Array<Entry>> {
@@ -72,7 +72,7 @@ class S3 implements Fs {
       Key: sanitize(path), 
       Body: buf,
       ACL: (options != null && options.isPublic) ? 'public-read' : 'private',
-    }, $cb1).eager());
+    }, $cb1).eager()); //.handle(function(o) trace(o)));
     var sink = Sink.ofNodeStream('Sink: $path', pass);
     return sink;
   }
