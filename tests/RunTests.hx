@@ -30,6 +30,7 @@ class RunTests {
   function new(fs) this.fs = fs;
   
   @:setup
+  @:timeout(20000)
   public function setup():Promise<Noise> {
     return switch Std.instance(fs, S3) {
       case null: Promise.NOISE;
