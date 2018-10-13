@@ -26,6 +26,8 @@ install:
   - pushd bin/node && yarn && popd
   - lix install haxe $HAXE_VERSION
   - lix download
+  - export AWS_ACCESS_KEY_ID=dummy
+  - export AWS_SECRET_ACCESS_KEY=dummy
   
 script:
   - lix run travix node
