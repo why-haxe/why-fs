@@ -22,6 +22,7 @@ env:
   
 install:
   - npm i -g lix
+  - pushd bin/node && yarn && popd
   - lix install haxe $HAXE_VERSION
   - lix download
   

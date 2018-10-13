@@ -80,47 +80,14 @@ class Local implements Fs {
   }
   
   public function delete(path:String):Promise<Noise> {
-    return Future.async(function(cb) {
-      var fullpath = getFullPath(path);
-      var ret = [];
-      var working = 0;
-      
-      function done() if(--working == 0) cb(Success(Noise));
-      function fail(e) cb(Failure(e));
-      
-      var rm:String->Void;
-      
-      function rmfile(f:String) {
-        working++;
-        f.deleteFile().handle(function(o) switch o {
-          case Success(_): done();
-          case Failure(e): fail(e);
-        });
-      }
-      
-      function rmdir(f:String) {
-        working ++;
-        return 
-          f.readDirectory()
-            .handle(function(o) switch o {
-              case Success(items):
-                for(item in items) rm(Path.join([f, item]));
-                done();
-              case Failure(e):
-                cb(Failure(e));
-            });
-      }
-      
-      rm = function(f:String) {
-        working++;
-        f.isDirectory().handle(function(isDir) {
-          working--;
-          if(isDir) rmdir(f) else rmfile(f);
-        });
-      }
-      
-      rm(fullpath);
-    });
+    var fullpath = getFullPath(path);
+    return fullpath.exists()
+      .next(function(exists) {
+        return
+          if(!exists) new Error(NotFound, 'Path "$fullpath" does not exist');
+          else path.isDirectory();
+      })
+      .next(function(isDir) return isDir ? fullpath.deleteDirectory() : fullpath.deleteFile());
   }
   
   public function stat(path:String):Promise<Stat> {
