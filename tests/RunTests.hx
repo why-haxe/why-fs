@@ -5,6 +5,7 @@ import tink.unit.Helper.*;
 import tink.testrunner.*;
 import why.Fs;
 import why.fs.*;
+import asys.io.*;
 
 using tink.CoreApi;
 using StringTools;
@@ -29,10 +30,27 @@ class RunTests {
   function new(fs) this.fs = fs;
   
   @:setup
+  @:timeout(200000)
   public function setup():Promise<Noise> {
     return switch Std.instance(fs, S3) {
       case null: Promise.NOISE;
-      case s3: @:futurize s3.s3.createBucket({Bucket: s3.bucket}, $cb1);
+      case s3: 
+        Future.async(function(cb) {
+          var trials = 60;
+          function wait() {
+            // trace('Checking if localstack is ready... ($trials)');
+            var proc = new Process('docker-compose', ['-f', 'submodules/localstack/docker-compose.yml', 'logs']);
+            proc.stdout.all().handle(function(o) switch o {
+              case Success(chunk):
+                if(chunk.toString().indexOf('Ready.') != -1) cb(Success(Noise));
+                else if(trials-- > 0) haxe.Timer.delay(wait, 3000);
+                else cb(Failure(new Error('Localstack not ready')));
+              case Failure(e):
+                cb(Failure(e));
+            });
+          }
+          wait();
+        }).next(function(_) return @:futurize s3.s3.createBucket({Bucket: s3.bucket}, $cb1));
     }
   }
   
