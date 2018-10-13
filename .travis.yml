@@ -22,6 +22,7 @@ env:
   
 install:
   - git clone https://github.com/localstack/localstack
+  - docker pull localstack/localstack
   - pushd localstack && docker-compose up -d && popd
   - npm i -g lix
   - pushd bin/node && yarn && popd
