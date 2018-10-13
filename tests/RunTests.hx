@@ -30,15 +30,27 @@ class RunTests {
   
   @:setup
   public function setup():Promise<Noise> {
+    return switch Std.instance(fs, S3) {
+      case null: Promise.NOISE;
+      case s3: @:futurize s3.s3.createBucket({Bucket: s3.bucket}, $cb1);
+    }
+  }
+  
+  @:before
+  public function before():Promise<Noise> {
     return fs.delete('.').recover(function(_) return Noise);
   }
   
-  // @:teardown
-  // public function teardown():Promise<Noise> {
-  // }
+  @:teardown
+  public function teardown():Promise<Noise> {
+    return switch Std.instance(fs, S3) {
+      case null: Promise.NOISE;
+      case s3: @:futurize s3.s3.deleteBucket({Bucket: s3.bucket}, $cb1);
+    }
+  }
   
   public function readWriteDelete() {
-    var path = '/foo/bar.txt';
+    var path = 'foo/bar.txt';
     var data = 'foobar';
     seq([
       lazy(
