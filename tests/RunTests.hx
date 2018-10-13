@@ -38,7 +38,7 @@ class RunTests {
         Future.async(function(cb) {
           var trials = 60;
           function wait() {
-            trace('Checking if localstack is ready... ($trials)');
+            // trace('Checking if localstack is ready... ($trials)');
             var proc = new Process('docker-compose', ['-f', 'submodules/localstack/docker-compose.yml', 'logs']);
             proc.stdout.all().handle(function(o) switch o {
               case Success(chunk):
@@ -46,15 +46,11 @@ class RunTests {
                 else if(trials-- > 0) haxe.Timer.delay(wait, 3000);
                 else cb(Failure(new Error('Localstack not ready')));
               case Failure(e):
-                trace(e.message);
-                trace(e.data);
                 cb(Failure(e));
             });
           }
           wait();
-        })
-          .next(function(_) return @:futurize s3.s3.createBucket({Bucket: s3.bucket}, $cb1));
-        
+        }).next(function(_) return @:futurize s3.s3.createBucket({Bucket: s3.bucket}, $cb1));
     }
   }
   

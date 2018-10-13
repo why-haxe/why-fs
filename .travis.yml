@@ -21,13 +21,13 @@ env:
   - HAXE_VERSION=latest
   
 install:
+  - export AWS_ACCESS_KEY_ID=dummy
+  - export AWS_SECRET_ACCESS_KEY=dummy
   - docker-compose -f submodules/localstack/docker-compose.yml up -d
   - npm i -g lix
   - pushd bin/node && yarn && popd
   - lix install haxe $HAXE_VERSION
   - lix download
-  - export AWS_ACCESS_KEY_ID=dummy
-  - export AWS_SECRET_ACCESS_KEY=dummy
   
 script:
   - lix run travix node
