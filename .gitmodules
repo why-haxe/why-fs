@@ -1,0 +1,3 @@
+[submodule "submodules/localstack"]
+	path = submodules/localstack
+	url = https://github.com/localstack/localstack
