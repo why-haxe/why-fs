@@ -30,13 +30,25 @@ class S3 implements Fs {
     var prefix = sanitize(path).addTrailingSlash();
     if(resursive) {
       return @:futurize s3.listObjectsV2({Bucket: bucket, Prefix: prefix}, $cb1)
-        .next(function(o):Array<Entry> return [for(obj in o.Contents) new Entry(obj.Key.substr(prefix.length), File)]);
+        .next(function(o):Array<Entry> {
+          return [for(obj in o.Contents)
+            new Entry(obj.Key.substr(prefix.length), File, {
+              size: obj.Size,
+              lastModified: cast obj.LastModified, // extern is wrong, it is Date already
+            })
+          ];
+        });
     } else {
       return @:futurize s3.listObjectsV2({Bucket: bucket, Prefix: prefix, Delimiter: '/'}, $cb1)
         .next(function(o):Array<Entry> {
           var ret = [];
-          for(obj in o.Contents) new Entry(obj.Key.substr(prefix.length), File);
-          for(folder in o.CommonPrefixes) new Entry(folder.Prefix.substr(prefix.length), Directory);
+          for(obj in o.Contents)
+            ret.push(new Entry(obj.Key.substr(prefix.length), File, {
+              size: obj.Size,
+              lastModified: cast obj.LastModified, // extern is wrong, it is Date already
+            }));
+          for(folder in o.CommonPrefixes)
+            ret.push(new Entry(folder.Prefix.substr(prefix.length), Directory, {}));
           return ret;
         });
     }
@@ -87,6 +99,7 @@ class S3 implements Fs {
       .next(function(o):Stat return {
         size: o.ContentLength,
         mime: o.ContentType,
+        lastModified: cast o.LastModified, // extern is wrong, it is Date already
         metadata: o.Metadata,
       });
   }

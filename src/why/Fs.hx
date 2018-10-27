@@ -74,8 +74,9 @@ interface Fs {
 }
 
 typedef Stat = {
-  size:Int,
-  mime:String,
+  ?size:Int,
+  ?mime:String,
+  ?lastModified:Date,
   ?metadata:DynamicAccess<String>,
 }
 
@@ -105,9 +106,9 @@ enum EntryType {
 }
 
 @:forward
-abstract Entry({path:String, type:EntryType}) to {path:String, type:EntryType} {
-  public inline function new(path, type) 
-    this = {path: path, type: type}
+abstract Entry({path:String, type:EntryType, stat:Stat}) to {path:String, type:EntryType, stat:Stat} {
+  public inline function new(path, type, stat) 
+    this = {path: path, type: type, stat: stat}
   
   @:to
   public inline function toString():String

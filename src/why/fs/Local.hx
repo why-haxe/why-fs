@@ -45,11 +45,11 @@ class Local implements Fs {
                               if(recursive) {
                                 read(path);
                               } else {
-                                ret.push(new Entry(trim(path.substr(fullpath.length)), Directory));
+                                ret.push(new Entry(trim(path.substr(fullpath.length)), Directory, {}));
                                 Noise;
                               }
                             } else {
-                              ret.push(new Entry(trim(path.substr(fullpath.length)), File));
+                              ret.push(new Entry(trim(path.substr(fullpath.length)), File, {}));
                               Noise;
                             }
                         });
@@ -95,6 +95,7 @@ class Local implements Fs {
       .next(function(stat):Stat return {
         size: stat.size,
         mime: mime.Mime.lookup(path),
+        lastModified: stat.mtime,
       });
   }
   
