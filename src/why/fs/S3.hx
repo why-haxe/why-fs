@@ -77,6 +77,7 @@ class S3 implements Fs {
   }
   
   public function write(path:String, ?options:WriteOptions):RealSink {
+    if(options == null) options = {};
     var pass = new js.node.stream.PassThrough();
     var buf = new Buffer(0);
     pass.on('data', function(d) buf = Buffer.concat([buf, d]));
