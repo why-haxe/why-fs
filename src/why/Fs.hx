@@ -2,6 +2,7 @@ package why;
 
 import haxe.DynamicAccess;
 import tink.http.Method;
+import tink.http.Header;
 
 using tink.CoreApi;
 using tink.io.Sink;
@@ -83,11 +84,10 @@ typedef Stat = {
 typedef UrlRequest = {
 	method:Method,
 	url:String,
+	headers:Array<HeaderField>,
 }
 
-typedef WriteOptions = {
-	?isPublic:Bool,
-}
+typedef WriteOptions = UploadOptions;
 
 typedef DownloadOptions = {
 	?isPublic:Bool,
@@ -97,6 +97,8 @@ typedef DownloadOptions = {
 typedef UploadOptions = {
 	?mime:String,
 	?isPublic:Bool,
+	?cacheControl:String,
+	?expires:Date,
 	?metadata:DynamicAccess<String>,
 }
 

@@ -2,6 +2,7 @@ package why.fs;
 
 import why.Fs;
 import tink.http.Method;
+import tink.http.Header;
 
 #if nodejs
 import js.node.Buffer;
@@ -84,6 +85,14 @@ class S3 implements Fs {
       Key: sanitize(path), 
       Body: buf,
       ACL: (options != null && options.isPublic) ? 'public-read' : 'private',
+      ContentType: options.mime,
+      CacheControl: options.cacheControl,
+      Expires: cast options.expires,
+      Metadata: 
+        switch options {
+          case null | {metadata: null}: {}
+          case {metadata: obj}: (cast obj:{});
+        }
     }, $cb1).eager()); //.handle(function(o) trace(o)));
     var sink = Sink.ofNodeStream('Sink: $path', pass);
     return sink;
@@ -106,7 +115,7 @@ class S3 implements Fs {
   
   public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<UrlRequest> {
     return if(options != null && options.isPublic && options.saveAsFilename == null)
-      {url: 'https://$bucket.s3.amazonaws.com/' + sanitize(path), method: GET}
+      {url: 'https://$bucket.s3.amazonaws.com/' + sanitize(path), method: GET, headers: []}
     else @:futurize s3.getSignedUrl('getObject', {
       Bucket: bucket, 
       Key: sanitize(path),
@@ -115,7 +124,7 @@ class S3 implements Fs {
         case {saveAsFilename: filename}: 'attachment; filename="$filename"';
       },
     }, $cb1)
-      .next(function(url) return {url: url, method: GET});
+      .next(function(url) return {url: url, method: GET, headers: []});
   }
   
   public function getUploadUrl(path:String, ?options:UploadOptions):Promise<UrlRequest> {
@@ -125,13 +134,22 @@ class S3 implements Fs {
       Key: sanitize(path), 
       ACL: (options != null && options.isPublic) ? 'public-read' : 'private',
       ContentType: options.mime,
+      CacheControl: options.cacheControl,
+      Expires: options.expires,
       Metadata: 
         switch options {
           case null | {metadata: null}: {}
           case {metadata: obj}: obj;
         }
     }, $cb1)
-      .next(function(url) return {url: url, method: PUT});
+      .next(function(url) return {
+        url: url, 
+        method: PUT, 
+        headers: [
+          new HeaderField(CONTENT_TYPE, options.mime),
+          new HeaderField(CACHE_CONTROL, options.cacheControl),
+        ]
+      });
   }
   
   static function sanitize(path:String) {
