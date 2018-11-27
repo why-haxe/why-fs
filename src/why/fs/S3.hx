@@ -32,12 +32,14 @@ class S3 implements Fs {
     if(resursive) {
       return @:futurize s3.listObjectsV2({Bucket: bucket, Prefix: prefix}, $cb1)
         .next(function(o):Array<Entry> {
-          return [for(obj in o.Contents)
-            new Entry(obj.Key.substr(prefix.length), File, {
-              size: obj.Size,
-              lastModified: cast obj.LastModified, // extern is wrong, it is Date already
-            })
-          ];
+          return [for(obj in o.Contents) {
+            var relativePath = obj.Key.substr(prefix.length); // Folder created in S3 console GUI
+            if(relativePath != '')
+              new Entry(relativePath, File, {
+                size: obj.Size,
+                lastModified: cast obj.LastModified, // extern is wrong, it is Date already
+              });
+          }];
         });
     } else {
       return @:futurize s3.listObjectsV2({Bucket: bucket, Prefix: prefix, Delimiter: '/'}, $cb1)
