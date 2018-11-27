@@ -100,8 +100,19 @@ class S3 implements Fs {
   }
   
   public function delete(path:String):Promise<Noise> {
-    // TODO: delete recursively if `path` is a folder
-    return @:futurize s3.deleteObject({Bucket: bucket, Key: sanitize(path)}, $cb1);
+    path = sanitize(path);
+    return 
+      if(path.charCodeAt(path.length - 1) == '/'.code) { // delete recursively if `path` is a folder
+        // WTH batch delete not supported in Node.js?! https://docs.aws.amazon.com/AmazonS3/latest/dev/DeletingMultipleObjects.html
+        list(path)
+          .next(function(entries) {
+            return Promise.inParallel([for(e in entries) 
+              @:futurize s3.deleteObject({Bucket: bucket, Key: Path.join([path, e.path])}, $cb1)
+            ]);
+          });
+      } else {
+        @:futurize s3.deleteObject({Bucket: bucket, Key: path}, $cb1);
+      }
   }
   
   public function stat(path:String):Promise<Stat> {

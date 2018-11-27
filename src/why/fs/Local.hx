@@ -85,9 +85,11 @@ class Local implements Fs {
       .next(function(exists) {
         return
           if(!exists) new Error(NotFound, 'Path "$fullpath" does not exist');
-          else path.isDirectory();
+          else fullpath.isDirectory();
       })
-      .next(function(isDir) return isDir ? fullpath.deleteDirectory() : fullpath.deleteFile());
+      .next(function(isDir) {
+        return isDir ? fullpath.deleteDirectory() : fullpath.deleteFile();
+      });
   }
   
   public function stat(path:String):Promise<Stat> {

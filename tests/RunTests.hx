@@ -56,7 +56,7 @@ class RunTests {
   
   @:before
   public function before():Promise<Noise> {
-    return fs.delete('.').recover(function(_) return Noise);
+    return fs.delete('./').recover(function(_) return Noise);
   }
   
   @:teardown
@@ -118,6 +118,29 @@ class RunTests {
         function() return Promise.inParallel([for(path in ['dir/foo/bar.txt', 'dir/foo/baz/poo.txt'])
           fs.delete(path)
         ])
+      ),
+    ]).handle(asserts.handle);
+    return asserts;
+  }
+  
+  @:include
+  public function deleteFolder() {
+    seq([
+      lazy(
+        function() return Promise.inParallel([for(path in ['dir/foo/bar.txt', 'dir/foo/baz/poo.txt'])
+          (path:IdealSource).pipeTo(fs.write(path), {end: true})
+        ])
+      ),
+      lazy(
+        function() return fs.list('dir/foo/'),
+        function(entries) asserts.assert(entries.length == 2)
+      ),
+      lazy(
+        function() return fs.delete('dir/foo/')
+      ),
+      lazy(
+        function() return fs.list('dir/foo/'),
+        function(entries) asserts.assert(entries.length == 0)
       ),
     ]).handle(asserts.handle);
     return asserts;
