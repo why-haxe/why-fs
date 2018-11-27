@@ -123,7 +123,6 @@ class RunTests {
     return asserts;
   }
   
-  @:include
   public function deleteFolder() {
     seq([
       lazy(
