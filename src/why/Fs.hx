@@ -64,14 +64,14 @@ interface Fs {
 	 *  @param path - 
 	 *  @return Promise<String>
 	 */
-	function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<UrlRequest>;
+	function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<RequestInfo>;
 	
 	/**
 	 *  Create a URL that can be used to upload the file
 	 *  @param path - 
 	 *  @return Promise<String>
 	 */
-	function getUploadUrl(path:String, ?options:UploadOptions):Promise<UrlRequest>;
+	function getUploadUrl(path:String, ?options:UploadOptions):Promise<RequestInfo>;
 }
 
 typedef Stat = {
@@ -81,7 +81,7 @@ typedef Stat = {
   ?metadata:DynamicAccess<String>,
 }
 
-typedef UrlRequest = {
+typedef RequestInfo = {
 	method:Method,
 	url:String,
 	headers:Array<HeaderField>,

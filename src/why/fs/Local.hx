@@ -14,8 +14,8 @@ using StringTools;
 class Local implements Fs {
   
   var root:String;
-  var _getDownloadUrl:String->DownloadOptions->Promise<UrlRequest>;
-  var _getUploadUrl:String->UploadOptions->Promise<UrlRequest>;
+  var _getDownloadUrl:String->DownloadOptions->Promise<RequestInfo>;
+  var _getUploadUrl:String->UploadOptions->Promise<RequestInfo>;
   
   public function new(options:LocalOptions) {
     root = options.root;
@@ -101,10 +101,10 @@ class Local implements Fs {
       });
   }
   
-  public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<UrlRequest>
+  public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<RequestInfo>
     return _getDownloadUrl(path, options);
     
-  public function getUploadUrl(path:String, ?options:UploadOptions):Promise<UrlRequest>
+  public function getUploadUrl(path:String, ?options:UploadOptions):Promise<RequestInfo>
     return _getUploadUrl(path, options);
   
   inline function getFullPath(path:String) {
@@ -119,6 +119,6 @@ class Local implements Fs {
 
 typedef LocalOptions = {
   root:String,
-  getDownloadUrl:String->DownloadOptions->Promise<UrlRequest>,
-  getUploadUrl:String->UploadOptions->Promise<UrlRequest>,
+  getDownloadUrl:String->DownloadOptions->Promise<RequestInfo>,
+  getUploadUrl:String->UploadOptions->Promise<RequestInfo>,
 }

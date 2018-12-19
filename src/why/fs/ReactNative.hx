@@ -36,11 +36,11 @@ class ReactNative implements Fs {
 		throw 'not implemented: why.fs.ReactNative.stat';
 	}
 	
-	public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<UrlRequest> {
+	public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<RequestInfo> {
 		throw 'not implemented: why.fs.ReactNative.getDownloadUrl';
 	}
 	
-	public function getUploadUrl(path:String, ?options:UploadOptions):Promise<UrlRequest> {
+	public function getUploadUrl(path:String, ?options:UploadOptions):Promise<RequestInfo> {
 		throw 'not implemented: why.fs.ReactNative.getUploadUrl';
 	}
 	
