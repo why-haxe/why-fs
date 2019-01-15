@@ -96,7 +96,7 @@ class S3 implements Fs {
           case null | {metadata: null}: {}
           case {metadata: obj}: (cast obj:{});
         }
-    }, $cb1).eager()); //.handle(function(o) trace(o)));
+    }, $cb1).handle(function(o) trace(o)));
     var sink = Sink.ofNodeStream('Sink: $path', pass);
     return sink;
   }
