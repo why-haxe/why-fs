@@ -1,11 +1,17 @@
 package why.fs;
 
 import why.Fs;
+import tink.streams.Stream;
 import tink.http.Method;
 import tink.http.Header;
+import tink.io.PipeOptions;
+import tink.io.PipeResult;
+import tink.Chunk;
+import haxe.io.BytesBuffer;
 
 #if nodejs
 import js.node.Buffer;
+import js.aws.s3.PutObjectInput;
 import js.aws.s3.S3 as NativeS3;
 #end
 
@@ -79,14 +85,10 @@ class S3 implements Fs {
   }
   
   public function write(path:String, ?options:WriteOptions):RealSink {
-    if(options == null) options = {};
-    var pass = new js.node.stream.PassThrough();
-    var buf = new Buffer(0);
-    pass.on('data', function(d) buf = Buffer.concat([buf, d]));
-    pass.on('end', function() @:futurize s3.putObject({
+    if(options == null) options = {}
+    return new S3Sink(s3, {
       Bucket: bucket, 
       Key: sanitize(path), 
-      Body: buf,
       ACL: (options != null && options.isPublic) ? 'public-read' : 'private',
       ContentType: options.mime,
       CacheControl: options.cacheControl,
@@ -96,9 +98,7 @@ class S3 implements Fs {
           case null | {metadata: null}: {}
           case {metadata: obj}: (cast obj:{});
         }
-    }, $cb1).handle(function(o) trace(o)));
-    var sink = Sink.ofNodeStream('Sink: $path', pass);
-    return sink;
+    });
   }
   
   public function delete(path:String):Promise<Noise> {
@@ -169,5 +169,43 @@ class S3 implements Fs {
   static function sanitize(path:String) {
     if(path.startsWith('/')) path = path.substr(1);
     return path;
+  }
+}
+
+@:build(futurize.Futurize.build())
+class S3Sink extends SinkBase<Error, Noise> {
+  var buffer = new BytesBuffer();
+  var ended = false;
+  var s3:NativeS3;
+  var params:PutObjectInput;
+  
+  public function new(s3, params) {
+    this.s3 = s3;
+    this.params = params;
+  }
+  
+  override function get_sealed() return ended;
+  
+  override function consume<EIn>(source:Stream<Chunk, EIn>, options:PipeOptions):Future<PipeResult<EIn, Error, Noise>> {
+    return source.forEach(function(chunk) {
+      buffer.add(chunk);
+      return Resume;
+    }).flatMap(function(o):Future<PipeResult<EIn, Error, Noise>> return switch o {
+      case Depleted:
+        if(options.end) {
+          ended = true;
+          params.Body = Buffer.hxFromBytes(buffer.getBytes());
+          @:futurize s3.putObject(params, $cb).map(function(o) return switch o {
+            case Success(_): AllWritten;
+            case Failure(e): SinkFailed(e, Source.EMPTY);
+          });
+        } else {
+          Future.sync(AllWritten);
+        }
+      case Failed(e):
+        Future.sync(cast SourceFailed(e));
+      case Halted(rest):
+        throw 'unreachable';
+    });
   }
 }
