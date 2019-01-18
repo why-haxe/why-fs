@@ -32,6 +32,14 @@ interface Fs {
 	function move(from:String, to:String):Promise<Noise>;
 	
 	/**
+	 *  Copy a file
+	 *  @param from - 
+	 *  @param to - 
+	 *  @return Promise<Noise>
+	 */
+	function copy(from:String, to:String):Promise<Noise>;
+	
+	/**
 	 *  Create a read stream to the target file
 	 *  @param path - 
 	 *  @return RealSource

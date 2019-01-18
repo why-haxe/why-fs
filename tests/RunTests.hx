@@ -123,6 +123,24 @@ class RunTests {
     return asserts;
   }
   
+  @:variant('foo/bar.txt', 'foo/bar2.txt')
+  public function copy(from:String, to:String) {
+    var data = 'foobar';
+    seq([
+      lazy(
+        function() return (data:IdealSource).pipeTo(fs.write(from), {end: true})
+      ),
+      lazy(
+        function() return fs.copy(from, to)
+      ),
+      lazy(
+        function() return fs.exists(from) && fs.exists(to),
+        function(result) asserts.assert(result.a && result.b)
+      ),
+    ]).handle(asserts.handle);
+    return asserts;
+  }
+  
   public function deleteFolder() {
     seq([
       lazy(

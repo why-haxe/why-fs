@@ -70,6 +70,12 @@ class Local implements Fs {
       .next(function(_) return getFullPath(from).rename(to));
   }
     
+  public function copy(from:String, to:String):Promise<Noise> {
+    var to = getFullPath(to);
+    return ensureDirectory(to.directory())
+      .next(function(_) return getFullPath(from).copy(to));
+  }
+    
   public function read(path:String):RealSource
     return getFullPath(path).readStream();
   
