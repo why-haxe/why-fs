@@ -3,6 +3,7 @@ package why;
 import haxe.DynamicAccess;
 import tink.http.Method;
 import tink.http.Header;
+import tink.state.Progress;
 
 using tink.CoreApi;
 using tink.io.Sink;
@@ -10,11 +11,20 @@ using tink.io.Source;
 
 interface Fs {
 	/**
-	 *  List all files with the path prefix
+	 *  Download a file
+	 *  @param req - 
+	 *  @param local - loca path
+	 *  @return Progress<Outcome<Noise, Error>>
+	 */
+	function download(req:RequestInfo, local:String):Progress<Outcome<Noise, Error>>;
+	
+	/**
+	 *  List all files that starts with the path prefix.
+	 *  Returned values have the prefix stripped
 	 *  @param path - 
 	 *  @return Promise<Array<String>>
 	 */
-	function list(path:String, ?resursive:Bool):Promise<Array<Entry>>;
+	function list(path:String, ?recursive:Bool):Promise<Array<Entry>>;
 	
 	/**
 	 *  Check if a file exists

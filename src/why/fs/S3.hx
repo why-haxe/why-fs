@@ -33,9 +33,13 @@ class S3 implements Fs {
     s3 = new NativeS3(opt);
   }
   
-  public function list(path:String, ?resursive:Bool = true):Promise<Array<Entry>> {
+  public function download(req:RequestInfo, local:String):Progress<Outcome<Noise, Error>> {
+    throw 'download not implemented';
+  }
+  
+  public function list(path:String, ?recursive:Bool = true):Promise<Array<Entry>> {
     var prefix = sanitize(path).addTrailingSlash();
-    if(resursive) {
+    if(recursive) {
       return @:futurize s3.listObjectsV2({Bucket: bucket, Prefix: prefix}, $cb1)
         .next(function(o):Array<Entry> {
           return [for(obj in o.Contents) {

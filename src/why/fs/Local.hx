@@ -22,6 +22,10 @@ class Local implements Fs {
     _getDownloadUrl = options.getDownloadUrl;
     _getUploadUrl = options.getUploadUrl;
   }
+  
+  public function download(req:RequestInfo, local:String):Progress<Outcome<Noise, Error>> {
+    throw 'download not implemented';
+  }
     
   public function list(path:String, ?recursive:Bool = true):Promise<Array<Entry>> {
     var fullpath = getFullPath(path);
