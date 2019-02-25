@@ -2,8 +2,9 @@
   "name": "why-fs",
   "classPath": "src",
   "dependencies": {
-    "tink_http": "gh:haxetink/tink_http",
-    "tink_io": "gh:haxetink/tink_io",
+    "tink_http": "",
+    "tink_state": "",
+    "tink_io": "",
     "futurize": "",
     "mime": ""
   },
