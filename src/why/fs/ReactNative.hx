@@ -22,8 +22,8 @@ class ReactNative implements Fs {
 	public static var DOCUMENT_DIRECTORY(get, never):String;
 	public static var CACHE_DIRECTORY(get, never):String;
 	
-	inline static function get_DOCUMENT_DIRECTORY():String return RNFetchBlob.dirs.DocumentDir;
-	inline static function get_CACHE_DIRECTORY():String return RNFetchBlob.dirs.CacheDir;
+	inline static function get_DOCUMENT_DIRECTORY():String return RNFetchBlob.fs.dirs.DocumentDir;
+	inline static function get_CACHE_DIRECTORY():String return RNFetchBlob.fs.dirs.CacheDir;
 	
 	public function new(root) {
 		this.root = root;
