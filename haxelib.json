@@ -1,6 +1,7 @@
 {
 	"name": "why-fs",
 	"classPath": "src",
+	"description": "Abstraction of various filesystem API",
 	"dependencies": {
 		"futurize": "",
 		"mime": "",
