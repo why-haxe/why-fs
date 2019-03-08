@@ -1,19 +1,19 @@
 {
-  "name": "why-fs",
-  "classPath": "src",
-  "dependencies": {
-    "tink_http": "",
-    "tink_state": "",
-    "futurize": "",
-    "mime": ""
-  },
-  "contributors": [
-    "kevinresol"
-  ],
-  "tags": [
-    "fs"
-  ],
-  "version": "0.0.0",
-  "license": "MIT",
-  "releasenote": "initial release"
+	"name": "why-fs",
+	"classPath": "src",
+	"dependencies": {
+		"futurize": "",
+		"mime": "",
+		"tink_state": "",
+		"tink_http": ""
+	},
+	"contributors": [
+		"kevinresol"
+	],
+	"version": "0.1.0",
+	"releasenote": "Initial release",
+	"tags": [
+		"fs"
+	],
+	"license": "MIT"
 }
