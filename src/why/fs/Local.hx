@@ -1,6 +1,7 @@
 package why.fs;
 
 import why.Fs;
+import tink.state.Progress;
 
 using asys.io.File;
 using asys.FileSystem;

@@ -6,6 +6,7 @@ import tink.http.Method;
 import tink.http.Header;
 import tink.io.PipeOptions;
 import tink.io.PipeResult;
+import tink.state.Progress;
 import tink.Chunk;
 import haxe.io.BytesBuffer;
 
