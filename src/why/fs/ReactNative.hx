@@ -15,7 +15,6 @@ using tink.io.Source;
 using tink.io.Sink;
 using Lambda;
 
-@:require('react-native-fs')
 class ReactNative implements Fs {
 	var root:String;
 	
