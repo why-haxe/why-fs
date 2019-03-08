@@ -4,7 +4,6 @@
   "dependencies": {
     "tink_http": "",
     "tink_state": "",
-    "tink_io": "",
     "futurize": "",
     "mime": ""
   },
