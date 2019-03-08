@@ -1,10 +1,38 @@
 # Why File System
 
 Abstraction of various (cloud) file systems.
+Mostly useful for reusing the same code for both local development and production environment.
+For example one may use the `Local` implementation while development on local machine and use the `S3` implementation on production.
+Since they implements the same interface, the swapping can be as simple as this:
+
+```haxe
+var fs:Fs = #if local new Local(root) #else new S3(bucket) #end;
+
+// then use the `fs` instance everywhere
+```
 
 ## Interface
 
-See [Fs.hx](src/why/Fs.hx)
+A quick glance:
+
+```haxe
+interface Fs {
+	function download(req:RequestInfo, local:String):Progress<Outcome<Noise, Error>>;
+	function list(path:String, ?recursive:Bool):Promise<Array<Entry>>;
+	function exists(path:String):Promise<Bool>;
+	function move(from:String, to:String):Promise<Noise>;
+	function copy(from:String, to:String):Promise<Noise>;
+	function read(path:String):RealSource;
+	function write(path:String, ?options:WriteOptions):RealSink;
+	function delete(path:String):Promise<Noise>;
+	function stat(path:String):Promise<Stat>;
+	function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<RequestInfo>;
+	function getUploadUrl(path:String, ?options:UploadOptions):Promise<RequestInfo>;
+}
+```
+
+Check out [Fs.hx](src/why/Fs.hx) for the documentations of each method.
+
 
 ## Usage
 
