@@ -33,7 +33,11 @@ class FilesApi {
   @:get('/')
   @:params(path in query, saveAs in query)
   public function download(path:String, ?saveAs:String):Promise<OutgoingResponse> {
-    var headers = [new HeaderField(CONTENT_TYPE, mime.Mime.lookup(path))];
+    var mime = switch mime.Mime.lookup(path) {
+      case null: 'application/octet-stream';
+      case v: v;
+    }
+    var headers = [new HeaderField(CONTENT_TYPE, mime)];
     if(saveAs != null) headers.push(new HeaderField(CONTENT_DISPOSITION, 'attachment; filename="$saveAs"'));
     return new OutgoingResponse(
       new ResponseHeader(200, 'OK', headers),
