@@ -120,9 +120,12 @@ class S3 implements Fs {
         // WTH batch delete not supported in Node.js?! https://docs.aws.amazon.com/AmazonS3/latest/dev/DeletingMultipleObjects.html
         list(path)
           .next(function(entries) {
-            return Promise.inParallel([for(e in entries) 
-              @:futurize s3.deleteObject({Bucket: bucket, Key: Path.join([path, e.path])}, $cb1)
-            ]);
+            return @:futurize s3.deleteObjects({
+                Bucket: bucket, 
+                Delete: {
+                  Objects: [for(e in entries) {Key: Path.join([path, e.path])}]
+                }
+            }, $cb);
           });
       } else {
         @:futurize s3.deleteObject({Bucket: bucket, Key: path}, $cb1);
