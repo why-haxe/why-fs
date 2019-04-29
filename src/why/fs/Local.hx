@@ -113,10 +113,10 @@ class Local implements Fs {
   }
   
   public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<RequestInfo>
-    return _getDownloadUrl(path, options);
+    return _getDownloadUrl == null ? new Error(NotImplemented, 'getDownloadUrl is not implemented') : _getDownloadUrl(path, options);
     
   public function getUploadUrl(path:String, ?options:UploadOptions):Promise<RequestInfo>
-    return _getUploadUrl(path, options);
+    return _getUploadUrl == null ? new Error(NotImplemented, 'getUploadUrl is not implemented') : _getUploadUrl(path, options);
   
   inline function getFullPath(path:String) {
     var full = Path.join([root, path]);
@@ -130,6 +130,6 @@ class Local implements Fs {
 
 typedef LocalOptions = {
   root:String,
-  getDownloadUrl:String->DownloadOptions->Promise<RequestInfo>,
-  getUploadUrl:String->UploadOptions->Promise<RequestInfo>,
+  ?getDownloadUrl:String->DownloadOptions->Promise<RequestInfo>,
+  ?getUploadUrl:String->UploadOptions->Promise<RequestInfo>,
 }
