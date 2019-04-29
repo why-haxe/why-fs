@@ -21,6 +21,7 @@ class FilesApi {
     
   @:put('/')
   @:params(path in query)
+  @:consumes('application/octet-stream')
   public function upload(path:String, body:RealSource):Promise<Noise> {
     return body.pipeTo(fs.write(path))
       .next(function(o) return switch o {
