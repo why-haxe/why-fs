@@ -1,0 +1,6 @@
+-cp tests
+-main Playground
+-js bin/js/index.js
+
+-lib why-fs
+-lib travix

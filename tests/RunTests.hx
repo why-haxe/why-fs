@@ -21,14 +21,16 @@ class RunTests {
 
   static function main() {
     Runner.run(TestBatch.make([
-      new RunTests(new Local({root: Sys.getCwd() + '/test-folder', getDownloadUrl: null, getUploadUrl: null})),
-      new RunTests(new S3('test-bucket', {endpoint: 'http://localhost:4572/test-bucket', s3BucketEndpoint: true})),
+      // new RunTests(new Local({root: Sys.getCwd() + '/test-folder', getDownloadUrl: null, getUploadUrl: null})),
+      // new RunTests(new S3('test-bucket', {endpoint: 'http://localhost:4572/test-bucket', s3BucketEndpoint: true})),
+      new RunTests(new Browser('test')),
     ])).handle(Runner.exit);
   }
   
   var fs:Fs;
   function new(fs) this.fs = fs;
   
+  #if sys
   @:setup
   @:timeout(200000)
   public function setup():Promise<Noise> {
@@ -53,12 +55,14 @@ class RunTests {
         }).next(function(_) return @:futurize s3.s3.createBucket({Bucket: s3.bucket}, $cb1));
     }
   }
+  #end
   
   @:before
   public function before():Promise<Noise> {
     return fs.delete('./').recover(function(_) return Noise);
   }
   
+  #if sys
   @:teardown
   public function teardown():Promise<Noise> {
     return switch Std.instance(fs, S3) {
@@ -66,6 +70,7 @@ class RunTests {
       case s3: @:futurize s3.s3.deleteBucket({Bucket: s3.bucket}, $cb1);
     }
   }
+  #end
   
   public function readWriteDelete() {
     var path = 'foo/bar.txt';
@@ -99,6 +104,7 @@ class RunTests {
     return asserts;
   }
   
+  @:include
   @:variant('Recursive'(true, false))
   @:variant('Non-Recursive'(false, true))
   @:variant('Default'(null, false))

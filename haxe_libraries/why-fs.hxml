@@ -2,6 +2,6 @@
 -D why_fs
 
 -lib tink_http
--lib tink_io
+-lib tink_state
 -lib futurize
 -lib mime
