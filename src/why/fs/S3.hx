@@ -182,7 +182,7 @@ class S3 implements Fs {
   }
   
   static function sanitize(path:String) {
-    if(path.startsWith('/')) path = path.substr(1);
+    if(path.charCodeAt(0) == '/'.code) path = path.substr(1);
     return path;
   }
 }
