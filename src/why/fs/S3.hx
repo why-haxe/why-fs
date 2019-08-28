@@ -74,16 +74,16 @@ class S3 implements Fs {
       .recover(function(_) return false);
       
   public function move(from:String, to:String):Promise<Noise> {
-    var from = sanitize(from);
-    var to = sanitize(to);
+    from = sanitize(from);
+    to = sanitize(to);
     
     return copy(from, to)
       .next(function(_) return @:futurize s3.deleteObject({Bucket: bucket, Key: from}, $cb1));
   }
       
   public function copy(from:String, to:String):Promise<Noise> {
-    var from = sanitize(from);
-    var to = sanitize(to);
+    from = sanitize(from);
+    to = sanitize(to);
     
     // retain acl: https://stackoverflow.com/a/38903136/3212365
     return @:futurize s3.copyObject({Bucket: bucket, CopySource: '$bucket/$from', Key: to}, $cb1)

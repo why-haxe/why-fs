@@ -61,8 +61,8 @@ class GoogleCloudStorage implements Fs {
 	}
 	
 	public function copy(from:String, to:String):Promise<Noise> {
-		var from = sanitize(from);
-		var to = sanitize(to);
+		from = sanitize(from);
+		to = sanitize(to);
 		return Promise.ofJsPromise(bucket.file(from).copy(to))
 			.next(_ -> Promise.ofJsPromise(bucket.file(from).isPublic()))
 			.next(o -> o.isPublic ? makePublicWhenExists(to) : Noise);
@@ -126,7 +126,7 @@ class GoogleCloudStorage implements Fs {
 	 * Wait for the file (just uploaded / created) to exist and then set it to public
 	 */
 	function makePublicWhenExists(path:String) {
-		var path = sanitize(path);
+		path = sanitize(path);
 		return Promise.retry(() -> exists(path).next(e -> e ? makePublic(path) : new Error('Pending')), info -> Future.delay(100, Noise));
 	}
 	
