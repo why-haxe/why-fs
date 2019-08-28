@@ -85,7 +85,7 @@ class S3 implements Fs {
     var from = sanitize(from);
     var to = sanitize(to);
     
-    // https://stackoverflow.com/a/38903136/3212365
+    // retain acl: https://stackoverflow.com/a/38903136/3212365
     return @:futurize s3.copyObject({Bucket: bucket, CopySource: '$bucket/$from', Key: to}, $cb1)
         .next(function(_) return @:futurize s3.getObjectAcl({Bucket: bucket, Key: from}, $cb1))
         .next(function(acl) return @:futurize s3.putObjectAcl({Bucket: bucket, Key: to, AccessControlPolicy: acl}, $cb1));
