@@ -98,7 +98,7 @@ class GoogleCloudStorage implements Fs {
 	}
 	
 	public function getUploadUrl(path:String, ?options:UploadOptions):Promise<RequestInfo> {
-		var acl = options == null || !options.isPublic ? 'private' : 'publicRead';
+		var acl = options == null || !options.isPublic ? 'private' : 'public-read';
 		return Promise.ofJsPromise(bucket.file(sanitize(path)).getSignedUrl({
 			action: 'write',
 			contentType: options == null ? null : options.mime,
