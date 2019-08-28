@@ -98,16 +98,23 @@ class GoogleCloudStorage implements Fs {
 	}
 	
 	public function getUploadUrl(path:String, ?options:UploadOptions):Promise<RequestInfo> {
+		var acl = options == null || !options.isPublic ? 'private' : 'publicRead';
 		return Promise.ofJsPromise(bucket.file(sanitize(path)).getSignedUrl({
 			action: 'write',
 			contentType: options == null ? null : options.mime,
 			expires: Date.now().getTime() + 3600000,
+			extensionHeaders: {'x-goog-acl': acl}
 			// TODO: other options
 		}))
 			.next(o -> {
 				url: o.url,
 				method: PUT,
-				headers: options == null || options.mime == null ? [] : [new HeaderField(CONTENT_TYPE, options.mime)],
+				headers: {
+					var headers = [new HeaderField('x-goog-acl', acl)];
+					if(options != null && options.mime != null)
+						headers.push(new HeaderField(CONTENT_TYPE, options.mime));
+					headers;
+				}
 			});
 	}
 	
