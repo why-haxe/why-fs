@@ -57,11 +57,18 @@ class GoogleCloudStorage implements Fs {
 	}
 	
 	public function move(from:String, to:String):Promise<Noise> {
-		return Promise.ofJsPromise(bucket.file(sanitize(from)).move(sanitize(to)));
+		return copy(from, to).next(_ -> delete(from));
 	}
 	
 	public function copy(from:String, to:String):Promise<Noise> {
-		return Promise.ofJsPromise(bucket.file(sanitize(from)).copy(sanitize(to)));
+		var from = sanitize(from);
+		var to = sanitize(to);
+		return Promise.ofJsPromise(bucket.file(from).copy(to))
+			.next(_ -> Promise.ofJsPromise(bucket.file(from).isPublic()))
+			.next(o -> {
+				trace(o);
+				!o.isPublic ? Noise : makePublicWhenExists(to);
+			});
 	}
 	
 	public function read(path:String):RealSource {
@@ -118,6 +125,14 @@ class GoogleCloudStorage implements Fs {
 			});
 	}
 	
+	function makePublicWhenExists(path:String) {
+		var path = sanitize(path);
+		return Promise.retry(() -> exists(path).next(e -> e ? makePublic(path) : new Error('Pending')), info -> Future.delay(100, Noise));
+	}
+	
+	inline function makePublic(path:String):Promise<Noise>
+		return Promise.ofJsPromise(bucket.file(sanitize(path)).makePublic());
+	
 	static function parseStat(metadata:Dynamic):Stat {
 		return {
 			size: Std.parseInt(metadata.size),
@@ -147,7 +162,9 @@ extern class Bucket {
 extern class File {
 	final name:String;
 	final metadata:Dynamic;
-	function copy(to:String):js.lib.Promise<CopyResponse>;
+	function isPublic():js.lib.Promise<IsPublicResponse>;
+	function makePublic():js.lib.Promise<MakeFilePublicResponse>;
+	function copy(to:String, ?opt:{}):js.lib.Promise<CopyResponse>;
 	function delete():js.lib.Promise<DeleteResponse>;
 	function move(to:String):js.lib.Promise<MoveResponse>;
 	function exists():js.lib.Promise<FileExistsResponse>;
@@ -160,6 +177,11 @@ extern class File {
 private extern class MoveResponse {}
 private extern class CopyResponse {}
 private extern class DeleteResponse {}
+private extern class MakeFilePublicResponse {}
+private abstract IsPublicResponse(Array<Bool>) {
+	public var isPublic(get, never):Bool;
+	inline function get_isPublic() return this[0];
+}
 private abstract GetFilesResponse(Array<Array<File>>) {
 	public var files(get, never):Array<File>;
 	inline function get_files() return this[0];
