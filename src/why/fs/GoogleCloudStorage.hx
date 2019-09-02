@@ -35,7 +35,6 @@ class GoogleCloudStorage implements Fs {
 			if(recursive)
 				Promise.ofJsPromise(bucket.getFiles({prefix: prefix}))
 					.next(o -> {
-						trace(o.files);
 						Promise.resolve([for(file in o.files) {
 							switch [file.name.substr(prefix.length), file.name.charCodeAt(file.name.length - 1) == '/'.code] {
 								case ['', _]: continue;
@@ -77,7 +76,7 @@ class GoogleCloudStorage implements Fs {
 		path = sanitize(path);
 		return Sink.ofNodeStream('GoogleCloudStorage WriteStream: $bucket/$path', bucket.file(path).createWriteStream({
 			contentType: options == null ? null : options.mime,
-			metadata: options == null ? null : options.metadata,
+			metadata: options == null || options.metadata == null ? {} : options.metadata,
 			predefinedAcl: options == null || !options.isPublic ? 'private' : 'publicRead',
 			resumeable: false,
 		}));
@@ -149,17 +148,17 @@ class GoogleCloudStorage implements Fs {
 }
 
 @:jsRequire('@google-cloud/storage', 'Storage')
-extern class Storage {
+private extern class Storage {
 	function new(?opt:{});
 	function bucket(name:String):Bucket;
 }
-extern class Bucket {
+private extern class Bucket {
 	final name:String;
 	function file(name:String):File;
 	function getFiles(opt:{}):js.lib.Promise<GetFilesResponse>;
 	function getMetadata():js.lib.Promise<GetBucketMetadataResponse>;
 }
-extern class File {
+private extern class File {
 	final name:String;
 	final metadata:Dynamic;
 	function isPublic():js.lib.Promise<IsPublicResponse>;
