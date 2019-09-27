@@ -21,6 +21,7 @@ using tink.io.Source;
 using tink.io.Sink;
 using StringTools;
 using haxe.io.Path;
+using why.fs.Util;
 
 @:build(futurize.Futurize.build())
 @:require('extern-js-aws-sdk')
@@ -39,17 +40,24 @@ class S3 implements Fs {
   }
   
   public function list(path:String, ?recursive:Bool = true):Promise<Array<Entry>> {
-    var prefix = sanitize(path).addTrailingSlash();
+    var prefix = sanitize(path);
+		if(prefix.length > 0) prefix = prefix.addTrailingSlash();
     if(recursive) {
       return @:futurize s3.listObjectsV2({Bucket: bucket, Prefix: prefix}, $cb1)
         .next(function(o):Array<Entry> {
           return [for(obj in o.Contents) {
-            var relativePath = obj.Key.substr(prefix.length); // Folder created in S3 console GUI
-            if(relativePath != '')
-              new Entry(relativePath, File, {
-                size: obj.Size,
-                lastModified: cast obj.LastModified, // extern is wrong, it is Date already
-              });
+            switch [obj.Key.substr(prefix.length), obj.Key.endsWithCharCode('/'.code)] {
+              case ['', _]: continue;
+              case [path, isDir]:
+                new Entry(
+                  isDir ? path.substr(0, path.length - 1) : path,
+                  isDir ? Directory : File,
+                  {
+                    size: obj.Size,
+                    lastModified: cast obj.LastModified, // extern is wrong, it is Date already
+                  }
+                );
+            }
           }];
         });
     } else {
@@ -181,9 +189,8 @@ class S3 implements Fs {
       });
   }
   
-  static function sanitize(path:String) {
-    if(path.charCodeAt(0) == '/'.code) path = path.substr(1);
-    return path;
+  inline static function sanitize(path:String) {
+    return path.removeLeadingSlash();
   }
 }
 
@@ -212,7 +219,7 @@ class S3Sink extends SinkBase<Error, Noise> {
           params.Body = Buffer.hxFromBytes(buffer.getBytes());
           @:futurize s3.putObject(params, $cb).map(function(o) return switch o {
             case Success(_): AllWritten;
-            case Failure(e): SinkFailed(e, Source.EMPTY);
+            case Failure(e): cast SinkFailed(e, Source.EMPTY);
           });
         } else {
           Future.sync(AllWritten);

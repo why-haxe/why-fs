@@ -10,6 +10,7 @@ using tink.io.Source;
 using tink.io.Sink;
 using StringTools;
 using haxe.io.Path;
+using why.fs.Util;
 
 class GoogleCloudStorage implements Fs {
 	
@@ -34,9 +35,9 @@ class GoogleCloudStorage implements Fs {
 		return
 			if(recursive)
 				Promise.ofJsPromise(bucket.getFiles({prefix: prefix}))
-					.next(o -> {
-						Promise.resolve([for(file in o.files) {
-							switch [file.name.substr(prefix.length), file.name.charCodeAt(file.name.length - 1) == '/'.code] {
+					.next(function(o):Array<Entry> {
+						return [for(file in o.files) {
+							switch [file.name.substr(prefix.length), file.name.endsWithCharCode('/'.code)] {
 								case ['', _]: continue;
 								case [path, isDir]:
 									new Entry(
@@ -45,26 +46,27 @@ class GoogleCloudStorage implements Fs {
 										parseStat(file.metadata)
 									);
 							}
-						}]);
+						}];
 					});
 			else
 				new Error(NotImplemented, 'Not implemented');
 	}
 	
 	public function exists(path:String):Promise<Bool> {
-		return Promise.ofJsPromise(bucket.file(sanitize(path)).exists()).next(v -> v.exists);
+		return Promise.ofJsPromise(bucket.file(sanitize(path)).exists())
+			.next(function(v) return v.exists);
 	}
 	
 	public function move(from:String, to:String):Promise<Noise> {
-		return copy(from, to).next(_ -> delete(from));
+		return copy(from, to).next(function(_) return delete(from));
 	}
 	
 	public function copy(from:String, to:String):Promise<Noise> {
 		from = sanitize(from);
 		to = sanitize(to);
 		return Promise.ofJsPromise(bucket.file(from).copy(to))
-			.next(_ -> Promise.ofJsPromise(bucket.file(from).isPublic()))
-			.next(o -> o.isPublic ? makePublicWhenExists(to) : Noise);
+			.next(function(_) return Promise.ofJsPromise(bucket.file(from).isPublic()))
+			.next(function(o) return o.isPublic ? makePublicWhenExists(to) : Noise);
 	}
 	
 	public function read(path:String):RealSource {
@@ -88,12 +90,12 @@ class GoogleCloudStorage implements Fs {
 	
 	public function stat(path:String):Promise<Stat> {
 		return Promise.ofJsPromise(bucket.file(sanitize(path)).getMetadata())
-			.next(v -> parseStat(v.metadata));
+			.next(function(v) return parseStat(v.metadata));
 	}
 	
 	public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<RequestInfo> {
 		return Promise.ofJsPromise(bucket.file(sanitize(path)).getSignedUrl({action: 'read', expires: Date.now().getTime() + 24 * 3600000, promptSaveAs: options == null ? null : options.saveAsFilename}))
-			.next(o -> {
+			.next(function(o) return {
 				url: o.url,
 				method: GET,
 				headers: []
@@ -109,7 +111,7 @@ class GoogleCloudStorage implements Fs {
 			extensionHeaders: {'x-goog-acl': acl}
 			// TODO: other options
 		}))
-			.next(o -> {
+			.next(function(o) return {
 				url: o.url,
 				method: PUT,
 				headers: {
@@ -126,7 +128,11 @@ class GoogleCloudStorage implements Fs {
 	 */
 	function makePublicWhenExists(path:String) {
 		path = sanitize(path);
-		return Promise.retry(() -> exists(path).next(e -> e ? makePublic(path) : new Error('Pending')), info -> Future.delay(100, Noise));
+		return Promise.retry(
+			function() return exists(path)
+				.next(function(e) return e ? makePublic(path) : new Error('Pending')),
+			function(info) return Future.delay(100, Noise)
+		);
 	}
 	
 	inline function makePublic(path:String):Promise<Noise>
@@ -141,9 +147,8 @@ class GoogleCloudStorage implements Fs {
 		}
 	}
 	
-	static function sanitize(path:String) {
-		if(path.charCodeAt(0) == '/'.code) path = path.substr(1);
-		return path;
+	inline static function sanitize(path:String) {
+		return path.removeLeadingSlash();
 	}
 }
 

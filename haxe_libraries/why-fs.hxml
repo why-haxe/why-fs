@@ -1,7 +1,7 @@
 -cp src
 -D why_fs
 
+-lib tink_state
 -lib tink_http
--lib tink_io
 -lib futurize
 -lib mime

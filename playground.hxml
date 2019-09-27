@@ -1,0 +1,9 @@
+-cp tests
+-main Playground
+-js bin/playground/playground.js
+-dce full
+
+-lib why-fs
+-lib extern-js-aws-sdk
+
+-D no-deprecation-warnings
