@@ -28,6 +28,7 @@ class AliOss implements Fs {
 	public function list(path:String, ?recursive:Bool = true):Promise<Array<Entry>> {
 		var prefix = sanitize(path);
 		if(prefix.length > 0) prefix = prefix.addTrailingSlash();
+		
 		return
 			if(recursive)
 				Promise.ofJsPromise(oss.list({prefix: prefix}))
@@ -36,17 +37,12 @@ class AliOss implements Fs {
 							case null: [];
 							case objects:
 								[for(obj in objects) {
-									switch [obj.name.substr(prefix.length), obj.name.endsWithCharCode('/'.code)] {
-										case ['', _]: continue;
-										case [path, isDir]:
-											new Entry(
-												isDir ? path.substr(0, path.length - 1) : path,
-												isDir ? Directory : File,
-												{
-													size: obj.size, 
-													lastModified: js.Syntax.code('new Date({0})', obj.lastModified),
-												}
-											);
+									switch Util.createEntry(prefix, obj.name, {
+										size: obj.size, 
+										lastModified: js.Syntax.code('new Date({0})', obj.lastModified),
+									}) {
+										case null: continue;
+										case entry: entry;
 									}
 								}];
 						}

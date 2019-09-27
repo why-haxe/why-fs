@@ -42,21 +42,17 @@ class S3 implements Fs {
   public function list(path:String, ?recursive:Bool = true):Promise<Array<Entry>> {
     var prefix = sanitize(path);
 		if(prefix.length > 0) prefix = prefix.addTrailingSlash();
+    
     if(recursive) {
       return @:futurize s3.listObjectsV2({Bucket: bucket, Prefix: prefix}, $cb1)
         .next(function(o):Array<Entry> {
           return [for(obj in o.Contents) {
-            switch [obj.Key.substr(prefix.length), obj.Key.endsWithCharCode('/'.code)] {
-              case ['', _]: continue;
-              case [path, isDir]:
-                new Entry(
-                  isDir ? path.substr(0, path.length - 1) : path,
-                  isDir ? Directory : File,
-                  {
-                    size: obj.Size,
-                    lastModified: cast obj.LastModified, // extern is wrong, it is Date already
-                  }
-                );
+            switch Util.createEntry(prefix, obj.Key, {
+              size: obj.Size,
+              lastModified: cast obj.LastModified, // extern is wrong, it is Date already
+            }) {
+              case null: continue;
+              case entry: entry;
             }
           }];
         });

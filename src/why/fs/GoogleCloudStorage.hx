@@ -27,24 +27,17 @@ class GoogleCloudStorage implements Fs {
 	}
 	
 	public function list(path:String, ?recursive:Bool = true):Promise<Array<Entry>> {
-		var prefix = switch sanitize(path) {
-			case '': '';
-			case v: v.addTrailingSlash();
-		}
+		var prefix = sanitize(path);
+		if(prefix.length > 0) prefix = prefix.addTrailingSlash();
 		
 		return
 			if(recursive)
 				Promise.ofJsPromise(bucket.getFiles({prefix: prefix}))
 					.next(function(o):Array<Entry> {
 						return [for(file in o.files) {
-							switch [file.name.substr(prefix.length), file.name.endsWithCharCode('/'.code)] {
-								case ['', _]: continue;
-								case [path, isDir]:
-									new Entry(
-										isDir ? path.substr(0, path.length - 1) : path,
-										isDir ? Directory : File,
-										parseStat(file.metadata)
-									);
+							switch Util.createEntry(prefix, file.name, parseStat(file.metadata)) {
+								case null: continue;
+								case entry: entry;
 							}
 						}];
 					});
