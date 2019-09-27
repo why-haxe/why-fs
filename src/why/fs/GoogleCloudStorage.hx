@@ -85,6 +85,7 @@ class GoogleCloudStorage implements Fs {
 	}
 	
 	public function delete(path:String):Promise<Noise> {
+		// TODO: delete recursively if path ends with '/'
 		return Promise.ofJsPromise(bucket.file(sanitize(path)).delete());
 	}
 	

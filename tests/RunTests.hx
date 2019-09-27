@@ -63,7 +63,7 @@ class RunTests {
   public function teardown():Promise<Noise> {
     return switch Std.instance(fs, S3) {
       case null: Promise.NOISE;
-      case s3: @:futurize s3.s3.deleteBucket({Bucket: s3.bucket}, $cb1);
+      case s3: fs.delete('./').next(function(_) return @:futurize s3.s3.deleteBucket({Bucket: s3.bucket}, $cb1));
     }
   }
   
