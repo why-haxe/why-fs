@@ -1,8 +1,10 @@
 package why.fs;
 
+import tink.http.Header.HeaderField;
 import js.node.stream.Readable.IReadable;
 import why.Fs;
 import tink.state.Progress;
+import tink.http.Method;
 import haxe.DynamicAccess;
 
 using tink.io.Source;
@@ -91,11 +93,53 @@ class AliOss implements Fs {
 	}
 	
 	public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<RequestInfo> {
-		return new Error(NotImplemented, 'AliOss#getDownloadUrl is not implemented');
+		var url:Promise<String> = 
+			if(options != null && options.isPublic)
+				oss.generateObjectUrl(sanitize(path));
+			else
+				Promise.ofJsPromise(oss.signatureUrl(sanitize(path), {
+					method: GET,
+					response: {
+						var headers:DynamicAccess<String> = {};
+						if(options != null && options.saveAsFilename != null)
+							headers['content-disposition'] = 'attachment; filename="${options.saveAsFilename}"';
+						headers;
+					}
+				}));
+				
+		return url.next(function(url) return {method: GET, url: url, headers: []});
 	}
 	
 	public function getUploadUrl(path:String, ?options:UploadOptions):Promise<RequestInfo> {
-		return new Error(NotImplemented, 'AliOss#getUploadUrl is not implemented');
+		var opt:DynamicAccess<Dynamic> = {};
+		var headers = [];
+		opt['method'] = PUT;
+		if(options != null) {
+			if(options.mime != null) {
+				opt['Content-Type'] = options.mime;
+				headers.push(new HeaderField(CONTENT_TYPE, options.mime));
+			}
+			if(options.isPublic != null) {
+				opt['x-oss-object-acl'] = 'public-read';
+				headers.push(new HeaderField('x-oss-object-acl', options.mime));
+			}
+			if(options.expires != null) {
+				opt['expires'] = Std.int((options.expires.getTime() - Date.now().getTime()) / 1000);
+			}
+			if(options.metadata != null) {
+				for(key in options.metadata.keys()) {
+					opt['x-oss-meta-$key'] = options.metadata[key];
+					headers.push(new HeaderField('x-oss-meta-$key', options.metadata[key]));
+				}
+			}
+			// TODO: cacheControl
+		}
+		return Promise.ofJsPromise(oss.signatureUrl(sanitize(path), cast opt))
+			.next(function(url) return {
+				url: url,
+				method: PUT,
+				headers: headers,
+			});
 	}
 	
 	inline static function sanitize(path:String) {
@@ -110,6 +154,8 @@ private extern class NativeOss {
 	function head(name:String, ?options:{}):js.Promise<HeadResult>;
 	function delete(name:String, ?options:{}):js.Promise<DeleteResult>;
 	function getStream(name:String, ?options:{}):js.Promise<GetStreamResult>;
+	function generateObjectUrl(name:String, ?baseUrl:String):String;
+	function signatureUrl(name:String, ?options:{}):js.Promise<String>;
 	function copy(to:String, from:String, ?options:{}):js.Promise<DeleteResult>;
 	function list(query:{}, ?options:{}):js.Promise<ListResult>;
 }
