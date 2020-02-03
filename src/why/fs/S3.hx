@@ -20,6 +20,7 @@ using tink.CoreApi;
 using tink.io.Source;
 using tink.io.Sink;
 using StringTools;
+using DateTools;
 using haxe.io.Path;
 using why.fs.Util;
 
@@ -156,6 +157,14 @@ class S3 implements Fs {
         case null | {saveAsFilename: null}: null;
         case {saveAsFilename: filename}: 'attachment; filename="$filename"';
       },
+      #if why.fs.snapExpiry
+      Expires: {
+        var now = Date.now();
+        var buffer = now.delta(15 * 60000);
+        var target = new Date(buffer.getFullYear(), buffer.getMonth(), buffer.getDate() + 7 - buffer.getDay(), 0, 0, 0);
+        Std.int((target.getTime() - buffer.getTime()) / 1000);
+      },
+      #end
     }, $cb1)
       .next(function(url) return {url: url, method: GET, headers: []});
   }
