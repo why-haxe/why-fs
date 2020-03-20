@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    services:
+      localstack:
+        image: localstack/localstack
+        ports:
+          - 4572:4572
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+        
+    - name: Cache Haxe
+      uses: actions/cache@v1
+      with:
+        path: ~/haxe
+        key: haxe
+      
+    - name: Install Lix
+      uses: lix-pm/setup-lix@master
+      
+    - name: Download Haxe and libraries
+      run: lix download
+      
+    - name: Run tests
+      run: lix run travix node
+      env:
+        CI: true
