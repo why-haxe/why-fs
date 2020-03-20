@@ -35,4 +35,6 @@ jobs:
     - name: Run tests
       run: lix run travix node
       env:
+        AWS_ACCESS_KEY_ID: dummy
+        AWS_SECRET_ACCESS_KEY: dummy
         CI: true
