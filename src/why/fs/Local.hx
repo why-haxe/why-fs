@@ -13,123 +13,161 @@ using StringTools;
 
 @:require('asys')
 class Local implements Fs {
-  
-  var root:String;
-  var _getDownloadUrl:String->DownloadOptions->Promise<RequestInfo>;
-  var _getUploadUrl:String->UploadOptions->Promise<RequestInfo>;
-  
-  public function new(options:LocalOptions) {
-    root = options.root;
-    _getDownloadUrl = options.getDownloadUrl;
-    _getUploadUrl = options.getUploadUrl;
-  }
-  
-  public function download(req:RequestInfo, local:String):Progress<Outcome<Noise, Error>> {
-    throw 'download not implemented';
-  }
-    
-  public function list(path:String, ?recursive:Bool = true):Promise<Array<Entry>> {
-    var fullpath = getFullPath(path);
-    inline function trim(v:String) return v.charCodeAt(0) == '/'.code ? v.substr(1) : v;
-    return 
-      fullpath.exists().next(function(exists) {
-        var ret:Array<Entry> = [];
-        return 
-          if(!exists) {
-            ret;
-          } else {
-            function read(f:String):Promise<Noise> {
-              return 
-                f.readDirectory()
-                  .next(function(files) {
-                      return Promise.inParallel([for(item in files) {
-                        var path = Path.join([f, item]);
-                        path.isDirectory().next(function(isDir) {
-                          return
-                            if(isDir) {
-                              if(recursive) {
-                                read(path);
-                              } else {
-                                ret.push(new Entry(trim(path.substr(fullpath.length)), Directory, {}));
-                                Noise;
-                              }
-                            } else {
-                              ret.push(new Entry(trim(path.substr(fullpath.length)), File, {}));
-                              Noise;
-                            }
-                        });
-                      }]);
-                  });
-            }
-            read(fullpath).swap(ret);
-          }
-      });
-  }
-    
-  public function exists(path:String):Promise<Bool>
-    return getFullPath(path).exists();
-    
-  public function move(from:String, to:String):Promise<Noise> {
-    var to = getFullPath(to);
-    return ensureDirectory(to.directory())
-      .next(function(_) return getFullPath(from).rename(to));
-  }
-    
-  public function copy(from:String, to:String):Promise<Noise> {
-    var to = getFullPath(to);
-    return ensureDirectory(to.directory())
-      .next(function(_) return getFullPath(from).copy(to));
-  }
-    
-  public function read(path:String):RealSource
-    return getFullPath(path).readStream();
-  
-  public function write(path:String, ?options:WriteOptions):RealSink {
-    path = getFullPath(path);
-    return ensureDirectory(path.directory())
-      .next(function(_) return path.writeStream());
-  }
-  
-  public function delete(path:String):Promise<Noise> {
-    var fullpath = getFullPath(path);
-    return fullpath.exists()
-      .next(function(exists) {
-        return
-          if(!exists) new Error(NotFound, 'Path "$fullpath" does not exist');
-          else fullpath.isDirectory();
-      })
-      .next(function(isDir) {
-        return isDir ? fullpath.deleteDirectory() : fullpath.deleteFile();
-      });
-  }
-  
-  public function stat(path:String):Promise<Stat> {
-    return getFullPath(path).stat().asPromise()
-      .next(function(stat):Stat return {
-        size: stat.size,
-        mime: mime.Mime.lookup(path),
-        lastModified: stat.mtime,
-      });
-  }
-  
-  public function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<RequestInfo>
-    return _getDownloadUrl == null ? new Error(NotImplemented, 'getDownloadUrl is not implemented') : _getDownloadUrl(path, options);
-    
-  public function getUploadUrl(path:String, ?options:UploadOptions):Promise<RequestInfo>
-    return _getUploadUrl == null ? new Error(NotImplemented, 'getUploadUrl is not implemented') : _getUploadUrl(path, options);
-  
-  inline function getFullPath(path:String) {
-    var full = Path.join([root, path]);
-    while(full.startsWith('.//')) full = '.' + full.substr(2); // https://github.com/HaxeFoundation/haxe/issues/7548
-    return full.normalize();
-  }
-    
-  function ensureDirectory(dir:String):Promise<Noise>
-    return dir.exists().next(function(e) return e ? Noise : dir.createDirectory());
+	var options:LocalOptions;
+
+	public function new(options:LocalOptions) {
+		this.options = options;
+	}
+
+	public function download(req:RequestInfo, local:String):Progress<Outcome<Noise, Error>> {
+		throw 'download not implemented';
+	}
+
+	public function list(prefix:String, ?recursive:Bool = true):Promise<ListResult> {
+		var fullpath = getFullPath(prefix);
+		return fullpath
+			.exists()
+			.next(function(exists) {
+				var files:Array<why.Fs.File> = [];
+				var directories:Array<String> = [];
+				var ret = {files: files, directories: directories}
+				return if (!exists) {
+					ret;
+				} else {
+					function read(f:String):Promise<Noise> {
+						return f
+							.readDirectory()
+							.next(function(list) {
+								return Promise.inParallel([for (item in list) {
+									var path = Path.join([f, item]);
+									path
+										.isDirectory()
+										.next(function(isDir) {
+											return if (isDir) {
+												if (recursive) {
+													read(path);
+												} else {
+													directories.push(path
+														.substr(fullpath.length - prefix.length)
+														.addTrailingSlash()
+													);
+													Noise;
+												}
+											} else {
+												files.push(new LocalFile(options, path.substr(fullpath.length - prefix.length)));
+												Noise;
+											}
+										});
+								}]);
+							});
+					}
+					read(fullpath)
+						.swap(ret);
+				}
+			});
+	}
+
+	public function file(path:String):why.Fs.File {
+		return new LocalFile(options, path);
+	}
+
+	public function delete(path:String):Promise<Noise> {
+		var fullpath = getFullPath(path);
+		return fullpath
+			.exists()
+			.next(function(exists) {
+				return if (!exists) new Error(NotFound, 'Path "$fullpath" does not exist'); else fullpath.isDirectory();
+			})
+			.next(function(isDir) {
+				return isDir ? fullpath.deleteDirectory() : fullpath.deleteFile();
+			});
+	}
+
+	inline function getFullPath(path:String) {
+		var full = Path.join([options.root, path]);
+		while (full.startsWith('.//'))
+			full = '.' + full.substr(2); // https://github.com/HaxeFoundation/haxe/issues/7548
+		return full.normalize();
+	}
+}
+
+class LocalFile implements why.Fs.File {
+	public final stats:Null<Stat>;
+	public final path:String;
+
+	final options:LocalOptions;
+	final fullpath:String;
+
+	public function new(options, path, ?stats) {
+		this.options = options;
+		this.path = path;
+		this.stats = stats;
+		fullpath = getFullPath(path);
+	}
+
+	public function exists():Promise<Bool>
+		return fullpath.exists();
+
+	public function move(to:String):Promise<Noise> {
+		var from = fullpath;
+		var to = getFullPath(to);
+		return ensureDirectory(to.directory())
+			.next(function(_) return from.rename(to));
+	}
+
+	public function copy(to:String):Promise<Noise> {
+		var from = fullpath;
+		var to = getFullPath(to);
+		return ensureDirectory(to.directory())
+			.next(function(_) return from.copy(to));
+	}
+
+	public function read():RealSource
+		return fullpath.readStream();
+
+	public function write(source:RealSource, ?options:WriteOptions):Promise<Noise> {
+		return ensureDirectory(fullpath.directory())
+			.next(function(_) return source.pipeTo(fullpath.writeStream(), {end: true}))
+			.next(function(v) return v.toOutcome())
+			.noise();
+	}
+
+	public function delete():Promise<Noise> {
+		return fullpath.deleteFile();
+	}
+
+	public function stat():Promise<Stat> {
+		return fullpath
+			.stat()
+			.asPromise()
+			.next(function(stat):Stat return {
+				size: stat.size,
+				mime: mime.Mime.lookup(path),
+				lastModified: stat.mtime,
+			});
+	}
+
+	public function getDownloadUrl(?opt:DownloadOptions):Promise<RequestInfo>
+		return options.getDownloadUrl == null ? new Error(NotImplemented, 'getDownloadUrl is not implemented') : options.getDownloadUrl(path, opt);
+
+	public function getUploadUrl(?opt:UploadOptions):Promise<RequestInfo>
+		return options.getUploadUrl == null ? new Error(NotImplemented, 'getUploadUrl is not implemented') : options.getUploadUrl(path, opt);
+
+	inline function getFullPath(path:String) {
+		var full = Path.join([options.root, path]);
+		while (full.startsWith('.//'))
+			full = '.' + full.substr(2); // https://github.com/HaxeFoundation/haxe/issues/7548
+		return full.normalize();
+	}
+
+	function ensureDirectory(dir:String):Promise<Noise>
+		return dir
+			.exists()
+			.next(function(e) return e ? Noise : dir.createDirectory());
 }
 
 typedef LocalOptions = {
-  root:String,
-  ?getDownloadUrl:String->DownloadOptions->Promise<RequestInfo>,
-  ?getUploadUrl:String->UploadOptions->Promise<RequestInfo>,
+	root:String,
+	?getDownloadUrl:String->DownloadOptions->Promise<RequestInfo>,
+	?getUploadUrl:String->UploadOptions->Promise<RequestInfo>,
 }

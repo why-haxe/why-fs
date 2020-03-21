@@ -124,8 +124,3 @@ typedef UploadOptions = {
 	?expires:Date,
 	?metadata:DynamicAccess<String>,
 }
-
-enum EntryType {
-	File;
-	Directory;
-}

@@ -22,7 +22,7 @@ class RunTests {
 		// js.aws.Aws.config.logger = cast js.Node.console;
 		Runner
 			.run(TestBatch.make([
-				// new RunTests(new Local({root: Sys.getCwd() + '/test-folder', getDownloadUrl: null, getUploadUrl: null})),
+				new RunTests(new Local({root: Sys.getCwd() + '/test-folder', getDownloadUrl: null, getUploadUrl: null})),
 				new RunTests(new S3('test-bucket', {endpoint: 'http://localhost:4572/test-bucket', s3BucketEndpoint: true})),
 			]))
 			.handle(Runner.exit);
@@ -36,7 +36,7 @@ class RunTests {
 	@:setup
 	@:timeout(200000)
 	public function setup():Promise<Noise> {
-		return switch Std.instance(fs, S3) {
+		return switch Std.downcast(fs, S3) {
 			case null: Promise.NOISE;
 			case s3:
 				Future
@@ -57,7 +57,7 @@ class RunTests {
 						}
 						wait();
 					})
-					.next(function(_) return @:futurize s3.s3.createBucket({Bucket: s3.bucket}, $cb1));
+					.next(_ -> @:futurize s3.s3.createBucket({Bucket: s3.bucket}, $cb1));
 		}
 	}
 
@@ -65,16 +65,16 @@ class RunTests {
 	public function before():Promise<Noise> {
 		return fs
 			.delete('./')
-			.recover(function(_) return Noise);
+			.recover(_ -> Noise);
 	}
 
 	@:teardown
 	public function teardown():Promise<Noise> {
-		return switch Std.instance(fs, S3) {
+		return switch Std.downcast(fs, S3) {
 			case null: Promise.NOISE;
 			case s3: fs
 					.delete('./')
-					.next(function(_) return @:futurize s3.s3.deleteBucket({Bucket: s3.bucket}, $cb1));
+					.next(_ -> @:futurize s3.s3.deleteBucket({Bucket: s3.bucket}, $cb1));
 		}
 	}
 
