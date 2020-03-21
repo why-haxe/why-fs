@@ -1,0 +1,7 @@
+{
+	"wrapping": {
+		"arrayWrap": { "defaultWrap": "keep" },
+		"methodChain": { "defaultWrap": "onePerLine" },
+		"callParameter": { "defaultWrap": "keep" }
+	}
+}

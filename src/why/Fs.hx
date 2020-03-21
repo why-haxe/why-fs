@@ -12,91 +12,96 @@ using tink.io.Source;
 interface Fs {
 	/**
 	 *  Download a file
-	 *  @param req - 
+	 *  @param req -
 	 *  @param local - loca path
 	 *  @return Progress<Outcome<Noise, Error>>
 	 */
 	function download(req:RequestInfo, local:String):Progress<Outcome<Noise, Error>>;
-	
+
 	/**
 	 *  List all files that starts with the path prefix.
 	 *  Returned values have the prefix stripped
-	 *  @param path - 
+	 *  @param path -
 	 *  @return Promise<Array<String>>
 	 */
-	function list(path:String, ?recursive:Bool):Promise<Array<Entry>>;
-	
+	function list(path:String, ?recursive:Bool):Promise<ListResult>;
+
+	function file(path:String):File;
+
+	function delete(path:String):Promise<Noise>;
+}
+
+interface File {
+	final stats:Null < Stat > ;
+	final path:String;
+
 	/**
 	 *  Check if a file exists
-	 *  @param path - 
 	 *  @return Promise<Bool>
 	 */
-	function exists(path:String):Promise<Bool>;
-	
+	function exists():Promise<Bool>;
+
 	/**
 	 *  Move (rename) a file
-	 *  @param from - 
-	 *  @param to - 
+	 *  @param to -
 	 *  @return Promise<Noise>
 	 */
-	function move(from:String, to:String):Promise<Noise>;
-	
+	function move(to:String):Promise<Noise>;
+
 	/**
 	 *  Copy a file
-	 *  @param from - 
-	 *  @param to - 
+	 *  @param to -
 	 *  @return Promise<Noise>
 	 */
-	function copy(from:String, to:String):Promise<Noise>;
-	
+	function copy(to:String):Promise<Noise>;
+
 	/**
 	 *  Create a read stream to the target file
-	 *  @param path - 
 	 *  @return RealSource
 	 */
-	function read(path:String):RealSource;
-	
+	function read():RealSource;
+
 	/**
 	 *  Create a write stream to the target file
-	 *  @param path - 
 	 *  @return RealSink
 	 */
-	function write(path:String, ?options:WriteOptions):RealSink;
-	
+	function write(source:RealSource, ?options:WriteOptions):Promise<Noise>;
+
 	/**
 	 *  Delete (recursively) all files with the path prefix
-	 *  @param path - 
 	 *  @return Promise<Noise>
 	 */
-	function delete(path:String):Promise<Noise>;
-	
+	function delete():Promise<Noise>;
+
 	/**
 	 *  Get the file information
-	 *  @param path - 
 	 *  @return Promise<Stat>
 	 */
-	function stat(path:String):Promise<Stat>;
-	
+	function stat():Promise<Stat>;
+
 	/**
 	 *  Create a URL that can be used to download the file
-	 *  @param path - 
 	 *  @return Promise<String>
 	 */
-	function getDownloadUrl(path:String, ?options:DownloadOptions):Promise<RequestInfo>;
-	
+	function getDownloadUrl(?options:DownloadOptions):Promise<RequestInfo>;
+
 	/**
 	 *  Create a URL that can be used to upload the file
-	 *  @param path - 
 	 *  @return Promise<String>
 	 */
-	function getUploadUrl(path:String, ?options:UploadOptions):Promise<RequestInfo>;
+	function getUploadUrl(?options:UploadOptions):Promise<RequestInfo>;
+}
+
+typedef ListResult = {
+	files:Array<File>,
+	directories:Array<String>,
 }
 
 typedef Stat = {
-  ?size:Int,
-  ?mime:String,
-  ?lastModified:Date,
-  ?metadata:DynamicAccess<String>,
+	?size:Int,
+	?mime:String,
+	?lastModified:Date,
+	?metadata:DynamicAccess<String>,
 }
 
 typedef RequestInfo = {
@@ -121,16 +126,6 @@ typedef UploadOptions = {
 }
 
 enum EntryType {
-  File;
-  Directory;
-}
-
-@:forward
-abstract Entry({path:String, type:EntryType, stat:Stat}) to {path:String, type:EntryType, stat:Stat} {
-  public inline function new(path, type, stat) 
-    this = {path: path, type: type, stat: stat}
-  
-  @:to
-  public inline function toString():String
-    return this.path;
+	File;
+	Directory;
 }
