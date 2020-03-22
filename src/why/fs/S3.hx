@@ -109,14 +109,14 @@ class S3 implements Fs {
 @:build(futurize.Futurize.build())
 class S3File implements File {
 	public final path:String;
-	public final stats:Stat;
+	public final info:Info;
 
 	final bucket:String;
 	final s3:NativeS3;
 
-	public function new(bucket, s3, path, ?stats) {
+	public function new(bucket, s3, path, ?info) {
 		this.path = path;
-		this.stats = stats;
+		this.info = info;
 		this.bucket = bucket;
 		this.s3 = s3;
 	}
@@ -181,10 +181,10 @@ class S3File implements File {
 		return @:futurize s3.deleteObject({Bucket: bucket, Key: path}, $cb1);
 	}
 
-	public function stat():Promise<Stat> {
+	public function getInfo():Promise<Info> {
 		return @:futurize s3
 			.headObject({Bucket: bucket, Key: path}, $cb1)
-			.next(function(o):Stat return {
+			.next(function(o):Info return {
 				size: o.ContentLength,
 				mime: o.ContentType,
 				lastModified: cast o.LastModified, // extern is wrong, it is Date already

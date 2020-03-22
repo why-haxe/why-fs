@@ -92,16 +92,16 @@ class Local implements Fs {
 }
 
 class LocalFile implements why.Fs.File {
-	public final stats:Null<Stat>;
+	public final info:Info;
 	public final path:String;
 
 	final options:LocalOptions;
 	final fullpath:String;
 
-	public function new(options, path, ?stats) {
+	public function new(options, path, ?info) {
 		this.options = options;
 		this.path = path;
-		this.stats = stats;
+		this.info = info;
 		fullpath = getFullPath(path);
 	}
 
@@ -136,11 +136,11 @@ class LocalFile implements why.Fs.File {
 		return fullpath.deleteFile();
 	}
 
-	public function stat():Promise<Stat> {
+	public function getInfo():Promise<Info> {
 		return fullpath
 			.stat()
 			.asPromise()
-			.next(function(stat):Stat return {
+			.next(function(stat):Info return {
 				size: stat.size,
 				mime: mime.Mime.lookup(path),
 				lastModified: stat.mtime,

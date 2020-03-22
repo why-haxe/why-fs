@@ -32,7 +32,7 @@ interface Fs {
 }
 
 interface File {
-	final stats:Null < Stat > ;
+	final info:Info;
 	final path:String;
 
 	/**
@@ -77,7 +77,7 @@ interface File {
 	 *  Get the file information
 	 *  @return Promise<Stat>
 	 */
-	function stat():Promise<Stat>;
+	function getInfo():Promise<Info>;
 
 	/**
 	 *  Create a URL that can be used to download the file
@@ -97,7 +97,7 @@ typedef ListResult = {
 	directories:Array<String>,
 }
 
-typedef Stat = {
+typedef Info = {
 	?size:Int,
 	?mime:String,
 	?lastModified:Date,
