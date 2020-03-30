@@ -2,6 +2,7 @@ package why.fs;
 
 import why.Fs;
 import tink.state.Progress;
+import tink.http.Request;
 
 using asys.io.File;
 using asys.FileSystem;
@@ -19,7 +20,7 @@ class Local implements Fs {
 		this.options = options;
 	}
 
-	public function download(req:RequestInfo, local:String):Progress<Outcome<Noise, Error>> {
+	public function download(req:OutgoingRequestHeader, local:String):Progress<Outcome<Noise, Error>> {
 		throw 'download not implemented';
 	}
 
@@ -147,10 +148,10 @@ class LocalFile implements why.Fs.File {
 			});
 	}
 
-	public function getDownloadUrl(?opt:DownloadOptions):Promise<RequestInfo>
+	public function getDownloadUrl(?opt:DownloadOptions):Promise<OutgoingRequestHeader>
 		return options.getDownloadUrl == null ? new Error(NotImplemented, 'getDownloadUrl is not implemented') : options.getDownloadUrl(path, opt);
 
-	public function getUploadUrl(?opt:UploadOptions):Promise<RequestInfo>
+	public function getUploadUrl(?opt:UploadOptions):Promise<OutgoingRequestHeader>
 		return options.getUploadUrl == null ? new Error(NotImplemented, 'getUploadUrl is not implemented') : options.getUploadUrl(path, opt);
 
 	inline function getFullPath(path:String) {
@@ -168,6 +169,6 @@ class LocalFile implements why.Fs.File {
 
 typedef LocalOptions = {
 	root:String,
-	?getDownloadUrl:String->DownloadOptions->Promise<RequestInfo>,
-	?getUploadUrl:String->UploadOptions->Promise<RequestInfo>,
+	?getDownloadUrl:String->DownloadOptions->Promise<OutgoingRequestHeader>,
+	?getUploadUrl:String->UploadOptions->Promise<OutgoingRequestHeader>,
 }

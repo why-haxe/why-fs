@@ -4,6 +4,7 @@ import why.Fs;
 import tink.streams.Stream;
 import tink.http.Method;
 import tink.http.Header;
+import tink.http.Request;
 import tink.io.PipeOptions;
 import tink.io.PipeResult;
 import tink.state.Progress;
@@ -34,7 +35,7 @@ class S3 implements Fs {
 		s3 = new NativeS3(opt);
 	}
 
-	public function download(req:RequestInfo, local:String):Progress<Outcome<Noise, Error>> {
+	public function download(req:OutgoingRequestHeader, local:String):Progress<Outcome<Noise, Error>> {
 		throw 'download not implemented';
 	}
 
@@ -192,9 +193,10 @@ class S3File implements File {
 			});
 	}
 
-	public function getDownloadUrl(?options:DownloadOptions):Promise<RequestInfo> {
+	public function getDownloadUrl(?options:DownloadOptions):Promise<OutgoingRequestHeader> {
 		return if (options != null && options.isPublic && options.saveAsFilename == null)
-			{url: 'https://$bucket.s3.amazonaws.com/' + path, method: GET, headers: []} else @:futurize
+			new OutgoingRequestHeader(GET, 'https://$bucket.s3.amazonaws.com/' + path, [])
+		else @:futurize
 			s3
 				.getSignedUrl('getObject', {
 					Bucket: bucket,
@@ -213,10 +215,10 @@ class S3File implements File {
 					},
 					#end
 				}, $cb1)
-				.next(function(url) return {url: url, method: GET, headers: []});
+				.next(function(url) return new OutgoingRequestHeader(GET, url, []));
 	}
 
-	public function getUploadUrl(?options:UploadOptions):Promise<RequestInfo> {
+	public function getUploadUrl(?options:UploadOptions):Promise<OutgoingRequestHeader> {
 		if (options == null || options.mime == null)
 			return new Error('Requires mime type');
 		return @:futurize s3
@@ -232,14 +234,10 @@ class S3File implements File {
 					case {metadata: obj}: obj;
 				}
 			}, $cb1)
-			.next(function(url) return {
-				url: url,
-				method: PUT,
-				headers: [
-					new HeaderField(CONTENT_TYPE, options.mime),
-					new HeaderField(CACHE_CONTROL, options.cacheControl),
-				]
-			});
+			.next(function(url) return new OutgoingRequestHeader(PUT, url, [
+				new HeaderField(CONTENT_TYPE, options.mime),
+				new HeaderField(CACHE_CONTROL, options.cacheControl),
+			]));
 	}
 
 	public inline function asFile():File

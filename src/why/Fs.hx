@@ -1,8 +1,7 @@
 package why;
 
 import haxe.DynamicAccess;
-import tink.http.Method;
-import tink.http.Header;
+import tink.http.Request;
 import tink.state.Progress;
 
 using tink.CoreApi;
@@ -16,7 +15,7 @@ interface Fs {
 	 *  @param local - loca path
 	 *  @return Progress<Outcome<Noise, Error>>
 	 */
-	function download(req:RequestInfo, local:String):Progress<Outcome<Noise, Error>>;
+	function download(req:OutgoingRequestHeader, local:String):Progress<Outcome<Noise, Error>>;
 
 	/**
 	 *  List all files that starts with the path prefix.
@@ -83,13 +82,13 @@ interface File {
 	 *  Create a URL that can be used to download the file
 	 *  @return Promise<String>
 	 */
-	function getDownloadUrl(?options:DownloadOptions):Promise<RequestInfo>;
+	function getDownloadUrl(?options:DownloadOptions):Promise<OutgoingRequestHeader>;
 
 	/**
 	 *  Create a URL that can be used to upload the file
 	 *  @return Promise<String>
 	 */
-	function getUploadUrl(?options:UploadOptions):Promise<RequestInfo>;
+	function getUploadUrl(?options:UploadOptions):Promise<OutgoingRequestHeader>;
 }
 
 typedef ListResult = {
@@ -102,12 +101,6 @@ typedef Info = {
 	?mime:String,
 	?lastModified:Date,
 	?metadata:DynamicAccess<String>,
-}
-
-typedef RequestInfo = {
-	method:Method,
-	url:String,
-	headers:Array<HeaderField>,
 }
 
 typedef WriteOptions = UploadOptions;
