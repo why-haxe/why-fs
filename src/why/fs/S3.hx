@@ -12,8 +12,7 @@ import tink.Chunk;
 import haxe.io.BytesBuffer;
 #if nodejs
 import js.node.Buffer;
-import js.aws.s3.PutObjectInput;
-import js.aws.s3.S3 as NativeS3;
+import aws_sdk.S3 as NativeS3;
 #end
 
 using tink.CoreApi;
@@ -23,9 +22,10 @@ using StringTools;
 using DateTools;
 using haxe.io.Path;
 using why.fs.Util;
+using js.lib.Date;
 
 @:build(futurize.Futurize.build())
-@:require('extern-js-aws-sdk')
+@:require('hxnodejs-aws-sdk')
 class S3 implements Fs {
 	var bucket:String;
 	var s3:NativeS3;
@@ -52,12 +52,11 @@ class S3 implements Fs {
 				.listObjectsV2({Bucket: bucket, Prefix: prefix}, $cb1)
 				.next(function(o):ListResult return {
 					files: [for (obj in o.Contents)
-						if (!obj.Key.endsWithCharCode('/'.code))
-							new S3File(bucket, s3, obj.Key, {
-								size: obj.Size,
-								lastModified: cast obj.LastModified, // extern is wrong, it is Date already
-							})
-								.asFile()
+						if (!obj.Key.endsWithCharCode('/'.code)) new S3File(bucket, s3, obj.Key, {
+							size: Std.int(obj.Size),
+							lastModified: obj.LastModified.toHaxeDate(),
+						})
+							.asFile()
 					],
 					directories: [],
 				});
@@ -68,8 +67,8 @@ class S3 implements Fs {
 					files: [
 						for (obj in o.Contents)
 							new S3File(bucket, s3, obj.Key, {
-								size: obj.Size,
-								lastModified: cast obj.LastModified, // extern is wrong, it is Date already
+								size: Std.int(obj.Size),
+								lastModified: obj.LastModified.toHaxeDate(),
 							})
 								.asFile()
 					],
@@ -150,7 +149,7 @@ class S3File implements File {
 	public function read():RealSource {
 		return @:futurize s3
 			.getObject({Bucket: bucket, Key: path}, $cb1)
-			.next(function(o):RealSource return (o.Body : Buffer)
+			.next(function(o):RealSource return (cast o.Body : Buffer)
 				.hxToBytes()
 			);
 	}
@@ -186,36 +185,34 @@ class S3File implements File {
 		return @:futurize s3
 			.headObject({Bucket: bucket, Key: path}, $cb1)
 			.next(function(o):Info return {
-				size: o.ContentLength,
+				size: Std.int(o.ContentLength),
 				mime: o.ContentType,
-				lastModified: cast o.LastModified, // extern is wrong, it is Date already
+				lastModified: o.LastModified.toHaxeDate(),
 				metadata: o.Metadata,
 			});
 	}
 
 	public function getDownloadUrl(?options:DownloadOptions):Promise<OutgoingRequestHeader> {
-		return if (options != null && options.isPublic && options.saveAsFilename == null)
-			new OutgoingRequestHeader(GET, 'https://$bucket.s3.amazonaws.com/' + path, [])
-		else @:futurize
-			s3
-				.getSignedUrl('getObject', {
-					Bucket: bucket,
-					Key: path,
-					ResponseContentDisposition: switch options {
-						case null | {saveAsFilename: null}: null;
-						case {saveAsFilename: filename}: 'attachment; filename="$filename"';
-					},
-					#if why.fs.snapExpiry
-					Expires: {
-						var now = Date.now();
-						var buffer = now.delta(15 * 60000);
-						var target = new Date(buffer.getFullYear(), buffer.getMonth(), buffer.getDate() + 7 - buffer.getDay(), 0, 0, 0);
-						Std.int
-						((target.getTime() - buffer.getTime()) / 1000);
-					},
-					#end
-				}, $cb1)
-				.next(function(url) return new OutgoingRequestHeader(GET, url, []));
+		return if (options != null && options.isPublic && options.saveAsFilename == null) new OutgoingRequestHeader(GET, 'https://$bucket.s3.amazonaws.com/'
+			+ path, []) else @:futurize s3
+			.getSignedUrl('getObject', {
+				Bucket: bucket,
+				Key: path,
+				ResponseContentDisposition: switch options {
+					case null | {saveAsFilename: null}: null;
+					case {saveAsFilename: filename}: 'attachment; filename="$filename"';
+				},
+				#if why.fs.snapExpiry
+				Expires: {
+					var now = Date.now();
+					var buffer = now.delta(15 * 60000);
+					var target = new Date(buffer.getFullYear(), buffer.getMonth(), buffer.getDate() + 7 - buffer.getDay(), 0, 0, 0);
+					Std.int
+					((target.getTime() - buffer.getTime()) / 1000);
+				},
+				#end
+			}, $cb1)
+			.next(function(url) return new OutgoingRequestHeader(GET, url, []));
 	}
 
 	public function getUploadUrl(?options:UploadOptions):Promise<OutgoingRequestHeader> {
