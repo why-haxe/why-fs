@@ -22,7 +22,6 @@ using StringTools;
 using DateTools;
 using haxe.io.Path;
 using why.fs.Util;
-using js.lib.Date;
 
 @:build(futurize.Futurize.build())
 @:require('hxnodejs-aws-sdk')
@@ -54,7 +53,7 @@ class S3 implements Fs {
 					files: [for (obj in o.Contents)
 						if (!obj.Key.endsWithCharCode('/'.code)) new S3File(bucket, s3, obj.Key, {
 							size: Std.int(obj.Size),
-							lastModified: obj.LastModified.toHaxeDate(),
+							lastModified: js.lib.Date.toHaxeDate(obj.LastModified),
 						})
 							.asFile()
 					],
@@ -68,7 +67,7 @@ class S3 implements Fs {
 						for (obj in o.Contents)
 							new S3File(bucket, s3, obj.Key, {
 								size: Std.int(obj.Size),
-								lastModified: obj.LastModified.toHaxeDate(),
+								lastModified: js.lib.Date.toHaxeDate(obj.LastModified),
 							})
 								.asFile()
 					],
@@ -187,7 +186,7 @@ class S3File implements File {
 			.next(function(o):Info return {
 				size: Std.int(o.ContentLength),
 				mime: o.ContentType,
-				lastModified: o.LastModified.toHaxeDate(),
+				lastModified: js.lib.Date.toHaxeDate(o.LastModified),
 				metadata: o.Metadata,
 			});
 	}
@@ -204,11 +203,10 @@ class S3File implements File {
 				},
 				#if why.fs.snapExpiry
 				Expires: {
-					var now = Date.now();
+					var now:Date = Date.now();
 					var buffer = now.delta(15 * 60000);
 					var target = new Date(buffer.getFullYear(), buffer.getMonth(), buffer.getDate() + 7 - buffer.getDay(), 0, 0, 0);
-					Std.int
-					((target.getTime() - buffer.getTime()) / 1000);
+					Std.int((target.getTime() - buffer.getTime()) / 1000);
 				},
 				#end
 			}, $cb1)
