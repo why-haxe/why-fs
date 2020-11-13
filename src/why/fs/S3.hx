@@ -23,7 +23,6 @@ using DateTools;
 using haxe.io.Path;
 using why.fs.Util;
 
-@:build(futurize.Futurize.build())
 @:require('hxnodejs-aws-sdk')
 class S3 implements Fs {
 	var bucket:String;
@@ -47,8 +46,7 @@ class S3 implements Fs {
 			prefix = prefix.substr(2);
 
 		if (recursive) {
-			return @:futurize s3
-				.listObjectsV2({Bucket: bucket, Prefix: prefix}, $cb1)
+			return Promise.ofJsPromise(s3.listObjectsV2({Bucket: bucket, Prefix: prefix}).promise())
 				.next(function(o):ListResult return {
 					files: [for (obj in o.Contents)
 						if (!obj.Key.endsWithCharCode('/'.code)) new S3File(bucket, s3, obj.Key, {
@@ -60,8 +58,7 @@ class S3 implements Fs {
 					directories: [],
 				});
 		} else {
-			return @:futurize s3
-				.listObjectsV2({Bucket: bucket, Prefix: prefix, Delimiter: '/'}, $cb1)
+			return Promise.ofJsPromise(s3.listObjectsV2({Bucket: bucket, Prefix: prefix, Delimiter: '/'}).promise())
 				.next(function(o):ListResult return {
 					files: [
 						for (obj in o.Contents)
@@ -84,15 +81,15 @@ class S3 implements Fs {
 				.next(function(v) {
 					return if (v.files.length == 0) {
 						Promise.NOISE;
-					} else @:futurize s3.deleteObjects({
+					} else Promise.ofJsPromise(s3.deleteObjects({
 						Bucket: bucket,
 						Delete: {
 							Objects: [for (f in v.files) {Key: f.path}]
 						}
-					}, $cb);
+					}).promise());
 				});
 		} else {
-			@:futurize s3.deleteObject({Bucket: bucket, Key: path}, $cb1);
+			Promise.ofJsPromise(s3.deleteObject({Bucket: bucket, Key: path}).promise());
 		}
 	}
 
@@ -105,7 +102,6 @@ class S3 implements Fs {
 	}
 }
 
-@:build(futurize.Futurize.build())
 class S3File implements File {
 	public final path:String;
 	public final info:Info;
@@ -121,17 +117,15 @@ class S3File implements File {
 	}
 
 	public function exists():Promise<Bool>
-		return @:futurize s3
-			.headObject({Bucket: bucket, Key: path}, $cb1)
-			.next(function(_) return true)
-			.recover(function(_) return false);
+		return Promise.ofJsPromise(s3.headObject({Bucket: bucket, Key: path}).promise())
+			.next(_ -> true)
+			.recover(_ -> false);
 
 	public function move(to:String):Promise<Noise> {
 		var from = path;
 		to = sanitize(to);
 
-		return copy(to)
-			.next(function(_) return @:futurize s3.deleteObject({Bucket: bucket, Key: from}, $cb1));
+		return copy(to).next(_ -> s3.deleteObject({Bucket: bucket, Key: from}).promise());
 	}
 
 	public function copy(to:String):Promise<Noise> {
@@ -139,18 +133,14 @@ class S3File implements File {
 		to = sanitize(to);
 
 		// retain acl: https://stackoverflow.com/a/38903136/3212365
-		return @:futurize s3
-			.copyObject({Bucket: bucket, CopySource: '$bucket/$from', Key: to}, $cb1)
-			.next(function(_) return @:futurize s3.getObjectAcl({Bucket: bucket, Key: from}, $cb1))
-			.next(function(acl) return @:futurize s3.putObjectAcl({Bucket: bucket, Key: to, AccessControlPolicy: acl}, $cb1));
+		return Promise.ofJsPromise(s3.copyObject({Bucket: bucket, CopySource: '$bucket/$from', Key: to}).promise())
+			.next(_ -> s3.getObjectAcl({Bucket: bucket, Key: from}).promise())
+			.next(acl -> s3.putObjectAcl({Bucket: bucket, Key: to, AccessControlPolicy: acl}).promise());
 	}
 
 	public function read():RealSource {
-		return @:futurize s3
-			.getObject({Bucket: bucket, Key: path}, $cb1)
-			.next(function(o):RealSource return (cast o.Body : Buffer)
-				.hxToBytes()
-			);
+		return Promise.ofJsPromise(s3.getObject({Bucket: bucket, Key: path}).promise())
+			.next(function(o):RealSource return (cast o.Body : Buffer).hxToBytes());
 	}
 
 	public function write(source:RealSource, ?options:WriteOptions):Promise<Noise> {
@@ -160,7 +150,7 @@ class S3File implements File {
 		return source
 			.all()
 			.next(chunk -> {
-				@:futurize s3.putObject({
+				Promise.ofJsPromise(s3.putObject({
 					Bucket: bucket,
 					Key: path,
 					ACL: (options != null && options.isPublic) ? 'public-read' : 'private',
@@ -172,17 +162,16 @@ class S3File implements File {
 						case {metadata: obj}: (cast obj : {});
 					},
 					Body: chunk.toBuffer(),
-				}, $cb);
+				}).promise());
 			});
 	}
 
 	public function delete():Promise<Noise> {
-		return @:futurize s3.deleteObject({Bucket: bucket, Key: path}, $cb1);
+		return Promise.ofJsPromise(s3.deleteObject({Bucket: bucket, Key: path}).promise());
 	}
 
 	public function getInfo():Promise<Info> {
-		return @:futurize s3
-			.headObject({Bucket: bucket, Key: path}, $cb1)
+		return Promise.ofJsPromise(s3.headObject({Bucket: bucket, Key: path}).promise())
 			.next(function(o):Info return {
 				size: Std.int(o.ContentLength),
 				mime: o.ContentType,
@@ -193,8 +182,8 @@ class S3File implements File {
 
 	public function getDownloadUrl(?options:DownloadOptions):Promise<OutgoingRequestHeader> {
 		return if (options != null && options.isPublic && options.saveAsFilename == null) new OutgoingRequestHeader(GET, 'https://$bucket.s3.amazonaws.com/'
-			+ path, []) else @:futurize s3
-			.getSignedUrl('getObject', {
+			+ path, []) else Promise.ofJsPromise(s3
+			.getSignedUrlPromise('getObject', {
 				Bucket: bucket,
 				Key: path,
 				ResponseContentDisposition: switch options {
@@ -203,21 +192,21 @@ class S3File implements File {
 				},
 				#if why.fs.snapExpiry
 				Expires: {
-					var now:Date = Date.now();
-					var buffer = now.delta(15 * 60000);
-					var target = new Date(buffer.getFullYear(), buffer.getMonth(), buffer.getDate() + 7 - buffer.getDay(), 0, 0, 0);
+					final now:Date = Date.now();
+					final buffer = now.delta(15 * 60000);
+					final target = new Date(buffer.getFullYear(), buffer.getMonth(), buffer.getDate() + 7 - buffer.getDay(), 0, 0, 0);
 					Std.int((target.getTime() - buffer.getTime()) / 1000);
 				},
 				#end
-			}, $cb1)
-			.next(function(url) return new OutgoingRequestHeader(GET, url, []));
+			}))
+			.next(url -> new OutgoingRequestHeader(GET, url, []));
 	}
 
 	public function getUploadUrl(?options:UploadOptions):Promise<OutgoingRequestHeader> {
 		if (options == null || options.mime == null)
 			return new Error('Requires mime type');
-		return @:futurize s3
-			.getSignedUrl('putObject', {
+		return Promise.ofJsPromise(s3
+			.getSignedUrlPromise('putObject', {
 				Bucket: bucket,
 				Key: path,
 				ACL: (options != null && options.isPublic) ? 'public-read' : 'private',
@@ -228,11 +217,13 @@ class S3File implements File {
 					case null | {metadata: null}: {}
 					case {metadata: obj}: obj;
 				}
-			}, $cb1)
-			.next(function(url) return new OutgoingRequestHeader(PUT, url, [
-				new HeaderField(CONTENT_TYPE, options.mime),
-				new HeaderField(CACHE_CONTROL, options.cacheControl),
-			]));
+			}))
+			.next(url -> {
+				final headers = [new HeaderField(CONTENT_TYPE, options.mime)];
+				if(options.cacheControl != null)
+					headers.push(new HeaderField(CACHE_CONTROL, options.cacheControl));
+				new OutgoingRequestHeader(PUT, url, headers);
+			});
 	}
 
 	public inline function asFile():File

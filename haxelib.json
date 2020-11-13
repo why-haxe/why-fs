@@ -3,18 +3,13 @@
 	"classPath": "src",
 	"description": "Abstraction of various filesystem API",
 	"dependencies": {
-		"futurize": "",
 		"mime": "",
 		"tink_state": "",
 		"tink_http": ""
 	},
-	"contributors": [
-		"kevinresol"
-	],
+	"contributors": ["kevinresol"],
 	"version": "0.1.0",
 	"releasenote": "Initial release",
-	"tags": [
-		"fs"
-	],
+	"tags": ["fs"],
 	"license": "MIT"
 }
