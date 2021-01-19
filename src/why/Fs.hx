@@ -21,12 +21,20 @@ interface Fs {
 	 *  List all files that starts with the path prefix.
 	 *  Returned values have the prefix stripped
 	 *  @param path -
-	 *  @return Promise<Array<String>>
+	 *  @return Promise<ListResult>
 	 */
 	function list(path:String, ?recursive:Bool):Promise<ListResult>;
 
+	/**
+	 *  Get a file object for the specified path
+	 *  @return File
+	 */
 	function file(path:String):File;
 
+	/**
+	 *  Delete (recursively) all files with the path prefix
+	 *  @return Promise<Noise>
+	 */
 	function delete(path:String):Promise<Noise>;
 }
 
@@ -41,15 +49,15 @@ interface File {
 	function exists():Promise<Bool>;
 
 	/**
-	 *  Move (rename) a file
-	 *  @param to -
+	 *  Move (rename) this
+	 *  @param to destination
 	 *  @return Promise<Noise>
 	 */
 	function move(to:String):Promise<Noise>;
 
 	/**
-	 *  Copy a file
-	 *  @param to -
+	 *  Copy this file
+	 *  @param to destination
 	 *  @return Promise<Noise>
 	 */
 	function copy(to:String):Promise<Noise>;
@@ -61,13 +69,13 @@ interface File {
 	function read():RealSource;
 
 	/**
-	 *  Create a write stream to the target file
+	 *  Write data to the target file (completely replace the existing file)
 	 *  @return RealSink
 	 */
 	function write(source:RealSource, ?options:WriteOptions):Promise<Noise>;
 
 	/**
-	 *  Delete (recursively) all files with the path prefix
+	 *  Delete this file
 	 *  @return Promise<Noise>
 	 */
 	function delete():Promise<Noise>;
