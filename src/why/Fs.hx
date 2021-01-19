@@ -43,13 +43,13 @@ interface File {
 	final path:String;
 
 	/**
-	 *  Check if a file exists
+	 *  Check if this file exists
 	 *  @return Promise<Bool>
 	 */
 	function exists():Promise<Bool>;
 
 	/**
-	 *  Move (rename) this
+	 *  Move (rename) this file
 	 *  @param to destination
 	 *  @return Promise<Noise>
 	 */
@@ -63,13 +63,13 @@ interface File {
 	function copy(to:String):Promise<Noise>;
 
 	/**
-	 *  Create a read stream to the target file
+	 *  Create a read stream to this file
 	 *  @return RealSource
 	 */
 	function read():RealSource;
 
 	/**
-	 *  Write data to the target file (completely replace the existing file)
+	 *  Write data to this file (completely replace the existing file)
 	 *  @return RealSink
 	 */
 	function write(source:RealSource, ?options:WriteOptions):Promise<Noise>;
@@ -81,19 +81,19 @@ interface File {
 	function delete():Promise<Noise>;
 
 	/**
-	 *  Get the file information
+	 *  Get the information of this file
 	 *  @return Promise<Stat>
 	 */
 	function getInfo():Promise<Info>;
 
 	/**
-	 *  Create a URL that can be used to download the file
+	 *  Create a URL that can be used to download this file
 	 *  @return Promise<String>
 	 */
 	function getDownloadUrl(?options:DownloadOptions):Promise<OutgoingRequestHeader>;
 
 	/**
-	 *  Create a URL that can be used to upload the file
+	 *  Create a URL that can be used to upload this file
 	 *  @return Promise<String>
 	 */
 	function getUploadUrl(?options:UploadOptions):Promise<OutgoingRequestHeader>;
