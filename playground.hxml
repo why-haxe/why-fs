@@ -4,6 +4,6 @@
 -dce full
 
 -lib why-fs
--lib extern-js-aws-sdk
+-lib hxnodejs-aws-sdk
 
 -D no-deprecation-warnings
