@@ -13,6 +13,7 @@ import haxe.io.BytesBuffer;
 #if nodejs
 import js.node.Buffer;
 import aws_sdk.S3 as NativeS3;
+import aws_sdk.s3.*;
 #end
 
 using tink.CoreApi;
@@ -47,7 +48,7 @@ class S3 implements Fs {
 
 		if (recursive) {
 			return Promise.ofJsPromise(s3.listObjectsV2({Bucket: bucket, Prefix: prefix}).promise())
-				.next(function(o):ListResult return {
+				.next(function(o:ListObjectsV2Output):ListResult return {
 					files: [for (obj in o.Contents)
 						if (!obj.Key.endsWithCharCode('/'.code)) new S3File(bucket, s3, obj.Key, {
 							size: Std.int(obj.Size),
@@ -59,7 +60,7 @@ class S3 implements Fs {
 				});
 		} else {
 			return Promise.ofJsPromise(s3.listObjectsV2({Bucket: bucket, Prefix: prefix, Delimiter: '/'}).promise())
-				.next(function(o):ListResult return {
+				.next(function(o:ListObjectsV2Output):ListResult return {
 					files: [
 						for (obj in o.Contents)
 							new S3File(bucket, s3, obj.Key, {

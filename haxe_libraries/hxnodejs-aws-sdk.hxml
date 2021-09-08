@@ -1,3 +1,3 @@
--cp ${SCOPE_DIR}/../hxnodejs-aws-sdk/src
+# @install: lix --silent download "gh://github.com/kevinresol/hxnodejs-aws-sdk#96e52c41e0adfaf93422583178dd901e44f8a68f" into hxnodejs-aws-sdk/2.719.0/github/96e52c41e0adfaf93422583178dd901e44f8a68f
+-cp ${HAXE_LIBCACHE}/hxnodejs-aws-sdk/2.719.0/github/96e52c41e0adfaf93422583178dd901e44f8a68f/src
 -D hxnodejs-aws-sdk=2.719.0
---macro Sys.println("haxe_libraries/hxnodejs-aws-sdk.hxml:2: [Warning] Using dev version of library hxnodejs-aws-sdk")

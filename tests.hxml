@@ -4,4 +4,4 @@
 
 -lib tink_unittest
 -lib asys
--lib extern-js-aws-sdk
+-lib hxnodejs-aws-sdk
